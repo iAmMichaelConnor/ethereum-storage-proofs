@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794420850120,
+  "lastUpdate": 1794420851503,
   "repoUrl": "https://github.com/iAmMichaelConnor/ethereum-storage-proofs",
   "entries": {
     "ACIR Opcodes": [
@@ -946,6 +946,195 @@ window.BENCHMARK_DATA = {
           {
             "name": "threshold_d8/main",
             "value": 671754,
+            "unit": "circuit_size"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mike@aztec.foundation",
+            "name": "iAmMichaelConnor",
+            "username": "iAmMichaelConnor"
+          },
+          "committer": {
+            "email": "mike@aztec.foundation",
+            "name": "iAmMichaelConnor",
+            "username": "iAmMichaelConnor"
+          },
+          "distinct": true,
+          "id": "13f6ba034107f9a45b12ff84f58aa160d6bb1769",
+          "message": "perf: vendor keccak256 with the lane-level sponge",
+          "timestamp": "2026-11-11T18:11:17Z",
+          "tree_id": "37a0dedac7339d707c83e6e977b47e1e6a453313",
+          "url": "https://github.com/iAmMichaelConnor/ethereum-storage-proofs/commit/13f6ba034107f9a45b12ff84f58aa160d6bb1769"
+        },
+        "date": 1794420851481,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "account_absent/main",
+            "value": 409355,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "account_balance/main",
+            "value": 101020,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "account_d8/main",
+            "value": 672657,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "batch4/main",
+            "value": 241647,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "consume_storage/main",
+            "value": 703174,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "erc20_balance/main",
+            "value": 199979,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "event/main",
+            "value": 511761,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "keccak256_135/main",
+            "value": 40618,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "keccak256_32/main",
+            "value": 40618,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "keccak256_532/main",
+            "value": 74658,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "l1_d8/main",
+            "value": 1319021,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "l1_mixed/main",
+            "value": 1114407,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "l1_zero/main",
+            "value": 762997,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "linked_batch4/main",
+            "value": 1469419,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "linked_storage/main",
+            "value": 1468740,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "linked_threshold/main",
+            "value": 1468740,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "linked_zero/main",
+            "value": 1468686,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "receipt_summary/main",
+            "value": 456840,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "slot_mapping/main",
+            "value": 40618,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "ssz_branch_5/main",
+            "value": 44643,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "ssz_deneb_anchor/main",
+            "value": 118110,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "storage_d8/main",
+            "value": 650192,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "storage_deep/main",
+            "value": 1256654,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "storage_general_d3_b135/main",
+            "value": 106616,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "storage_general_d8_b532/main",
+            "value": 649082,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "storage_hashed_d1_b532/main",
+            "value": 114658,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "storage_hashed_d3_b135/main",
+            "value": 100135,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "storage_hashed_d3_b532/main",
+            "value": 263610,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "storage_hashed_d8_b532/main",
+            "value": 635989,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "storage_mixed_d7_b532/main",
+            "value": 506095,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "storage_small/main",
+            "value": 193993,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "storage_zero/main",
+            "value": 409455,
+            "unit": "circuit_size"
+          },
+          {
+            "name": "threshold_d8/main",
+            "value": 650485,
             "unit": "circuit_size"
           }
         ]
