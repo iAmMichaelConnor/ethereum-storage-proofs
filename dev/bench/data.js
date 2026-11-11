@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794420858558,
+  "lastUpdate": 1794431822236,
   "repoUrl": "https://github.com/iAmMichaelConnor/ethereum-storage-proofs",
   "entries": {
     "ACIR Opcodes": [
@@ -401,6 +401,195 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/iAmMichaelConnor/ethereum-storage-proofs/commit/13f6ba034107f9a45b12ff84f58aa160d6bb1769"
         },
         "date": 1794420849291,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "account_absent/main",
+            "value": 27267,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "account_balance/main",
+            "value": 8473,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "account_d8/main",
+            "value": 27361,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "batch4/main",
+            "value": 36626,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "consume_storage/main",
+            "value": 83,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "erc20_balance/main",
+            "value": 17016,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "event/main",
+            "value": 38271,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "keccak256_135/main",
+            "value": 394,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "keccak256_32/main",
+            "value": 189,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "keccak256_532/main",
+            "value": 1204,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "l1_d8/main",
+            "value": 63297,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "l1_mixed/main",
+            "value": 55251,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "l1_zero/main",
+            "value": 42384,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "linked_batch4/main",
+            "value": 335,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "linked_storage/main",
+            "value": 124,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "linked_threshold/main",
+            "value": 124,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "linked_zero/main",
+            "value": 89,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "receipt_summary/main",
+            "value": 22169,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "slot_mapping/main",
+            "value": 302,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "ssz_branch_5/main",
+            "value": 1613,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "ssz_deneb_anchor/main",
+            "value": 3734,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "storage_d8/main",
+            "value": 35960,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "storage_deep/main",
+            "value": 69696,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "storage_general_d3_b135/main",
+            "value": 12009,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "storage_general_d8_b532/main",
+            "value": 35481,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "storage_hashed_d1_b532/main",
+            "value": 4847,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "storage_hashed_d3_b135/main",
+            "value": 8451,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "storage_hashed_d3_b532/main",
+            "value": 10889,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "storage_hashed_d8_b532/main",
+            "value": 25994,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "storage_mixed_d7_b532/main",
+            "value": 21509,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "storage_small/main",
+            "value": 12197,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "storage_zero/main",
+            "value": 27273,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "threshold_d8/main",
+            "value": 36309,
+            "unit": "acir_opcodes"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "41898282+github-actions[bot]@users.noreply.github.com",
+            "name": "github-actions[bot]",
+            "username": "github-actions[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1ba0085eb76b13a4984985334fab145be8751a6a",
+          "message": "chore: Release 0.1.1 (#2)\n\nCo-authored-by: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+          "timestamp": "2026-11-11T21:15:50Z",
+          "tree_id": "dea83b34e134866bf2ded7f3a2b46836244af610",
+          "url": "https://github.com/iAmMichaelConnor/ethereum-storage-proofs/commit/1ba0085eb76b13a4984985334fab145be8751a6a"
+        },
+        "date": 1794431821444,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
