@@ -11,7 +11,7 @@ check=false
 
 # name | repository | commit
 vendored=(
-    "keccak256|https://github.com/noir-lang/keccak256|bb2b579738fd627da7e1d7fcada304fdaba22e7e"
+    "keccak256|https://github.com/noir-lang/keccak256|cce7f909fe481dd01ef0f0501510964aef917e68"
 )
 
 scratch=$(mktemp -d)

@@ -86,9 +86,9 @@ every pull request, and with Noir nightly every night. Keep this in sync with
 the `toolchain` matrix in `.github/workflows/test.yml`.
 
 - `ethereum_keccak` depends on [noir-lang/keccak256](https://github.com/noir-lang/keccak256)
-  at commit `bb2b579738fd627da7e1d7fcada304fdaba22e7e`, copied to
+  at commit `cce7f909fe481dd01ef0f0501510964aef917e68`, copied to
   [`vendor/keccak256`](vendor/keccak256) because no release contains
-  `keccak256_lanes` yet (see [NOTICE](NOTICE)).
+  `keccak256_lanes` or the lane-level sponge yet (see [NOTICE](NOTICE)).
 - `ethereum_recursive_proofs` depends on [noir-lang/poseidon](https://github.com/noir-lang/poseidon) v0.4.0.
 - The recursive consumers verify Poseidon2 UltraHonk proofs (proof type 6) as bb
   6.0.0 produces them, and rely on bb 6.0.0 binding the verification key to its
@@ -200,7 +200,7 @@ API, CLI and proving.
 ## Benchmarks
 
 Circuit size (`bb gates` `circuit_size`) of selected `#[export]` benchmark
-functions, measured with Noir 1.0.0 and bb 6.0.0 on 2026-11-10. Each count is the
+functions, measured with Noir 1.0.0 and bb 6.0.0 on 2026-11-11. Each count is the
 whole function, including its ABI. The [benchmark workflow](.github/workflows/benchmark.yml)
 reports every benchmark on pull requests and records history on the `gh-pages`
 branch.
@@ -208,18 +208,18 @@ branch.
 | Operation | Benchmark | Circuit size |
 | --- | --- | ---: |
 | Keccak-256, 135-byte capacity (one permutation) | `keccak256_135` | 40,618 |
-| Keccak-256, 532-byte capacity | `keccak256_532` | 77,834 |
-| Storage value, 3 nodes of 135 bytes | `storage_general_d3_b135` | 108,884 |
-| Storage value, 8 nodes of 532 bytes | `storage_general_d8_b532` | 670,382 |
-| Storage value, 8 nodes of 532 bytes, hash-only | `storage_hashed_d8_b532` | 657,633 |
-| Account balance and nonce (README example) | `account_balance` | 103,689 |
-| ERC-20 balance (README example) | `erc20_balance` | 203,948 |
-| Storage producer, 4 hash-only nodes of 271 bytes | `storage_small` | 200,194 |
-| Account and storage producer, 8 + 8 nodes of 532 bytes | `l1_d8` | 1,362,107 |
-| Batch producer, 4 slots sharing 3 nodes of 135 bytes | `batch4` | 245,268 |
-| Receipt producer, depth 4, 1,024-byte receipt | `receipt_summary` | 472,833 |
-| Event producer, depth 4, 256 data bytes | `event` | 528,098 |
-| Zero-slot producer, depth 4 | `storage_zero` | 422,514 |
+| Keccak-256, 532-byte capacity | `keccak256_532` | 74,658 |
+| Storage value, 3 nodes of 135 bytes | `storage_general_d3_b135` | 106,616 |
+| Storage value, 8 nodes of 532 bytes | `storage_general_d8_b532` | 649,082 |
+| Storage value, 8 nodes of 532 bytes, hash-only | `storage_hashed_d8_b532` | 635,989 |
+| Account balance and nonce (README example) | `account_balance` | 101,020 |
+| ERC-20 balance (README example) | `erc20_balance` | 199,979 |
+| Storage producer, 4 hash-only nodes of 271 bytes | `storage_small` | 193,993 |
+| Account and storage producer, 8 + 8 nodes of 532 bytes | `l1_d8` | 1,319,021 |
+| Batch producer, 4 slots sharing 3 nodes of 135 bytes | `batch4` | 241,647 |
+| Receipt producer, depth 4, 1,024-byte receipt | `receipt_summary` | 456,840 |
+| Event producer, depth 4, 256 data bytes | `event` | 511,761 |
+| Zero-slot producer, depth 4 | `storage_zero` | 409,455 |
 | Deneb execution anchor | `ssz_deneb_anchor` | 118,110 |
 | Recursive consumer, one producer proof | `consume_storage` | 703,174 |
 | Recursive consumer, linked app and user proofs | `linked_storage` | 1,468,740 |

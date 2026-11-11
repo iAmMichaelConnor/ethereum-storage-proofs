@@ -13,7 +13,7 @@ licensed under the Apache License, Version 2.0, whose text is in LICENSE.
    StorageSlot structs of noir/ethereum_types/src/lib.nr.
 
 2. noir-lang/keccak256 (https://github.com/noir-lang/keccak256), commit
-   bb2b579738fd627da7e1d7fcada304fdaba22e7e, copied unmodified to
+   cce7f909fe481dd01ef0f0501510964aef917e68, copied unmodified to
    vendor/keccak256. Only Nargo.toml, README.md, LICENSE and src/ are copied.
    scripts/vendor.sh rebuilds the directory from that commit and checks that
    it matches.
