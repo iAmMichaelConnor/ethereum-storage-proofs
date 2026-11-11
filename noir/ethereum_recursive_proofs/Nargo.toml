@@ -1,0 +1,9 @@
+[package]
+name = "ethereum_recursive_proofs"
+type = "lib"
+authors = ["Michael Connor"]
+compiler_version = ">=1.0.0"
+
+[dependencies]
+ethereum_types = { path = "../ethereum_types" }
+poseidon = { tag = "v0.4.0", git = "https://github.com/noir-lang/poseidon" }

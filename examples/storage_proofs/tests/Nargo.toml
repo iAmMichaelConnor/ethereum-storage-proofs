@@ -1,0 +1,9 @@
+[package]
+name = "storage_proofs_test"
+type = "lib"
+authors = ["Michael Connor"]
+compiler_version = ">=1.0.0"
+
+[dependencies]
+aztec = { git = "https://github.com/aztec-labs-eng/aztec-nr", tag = "v6.0.0", directory = "aztec" }
+storage_proofs_contract = { path = "../contract" }

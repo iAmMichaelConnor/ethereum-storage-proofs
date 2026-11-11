@@ -1,0 +1,10 @@
+[package]
+name = "ethereum_storage_proofs"
+type = "lib"
+authors = ["Michael Connor"]
+compiler_version = ">=1.0.0"
+
+[dependencies]
+ethereum_recursive_proofs = { path = "../ethereum_recursive_proofs" }
+ethereum_ssz = { path = "../ethereum_ssz" }
+ethereum_proofs = { path = "../ethereum_proofs" }

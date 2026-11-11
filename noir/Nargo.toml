@@ -1,0 +1,9 @@
+[workspace]
+members = [
+    "ethereum_types",
+    "ethereum_keccak",
+    "ethereum_ssz",
+    "ethereum_proofs",
+    "ethereum_recursive_proofs",
+    "ethereum_storage_proofs",
+]

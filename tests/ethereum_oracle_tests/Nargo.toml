@@ -1,0 +1,8 @@
+[package]
+name = "ethereum_oracle_tests"
+type = "lib"
+authors = ["Michael Connor"]
+compiler_version = ">=1.0.0"
+
+[dependencies]
+ethereum_proofs = { path = "../../noir/ethereum_proofs" }

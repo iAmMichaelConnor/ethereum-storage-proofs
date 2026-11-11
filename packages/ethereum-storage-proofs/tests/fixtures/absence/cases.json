@@ -1,0 +1,173 @@
+[
+  {
+    "name": "empty",
+    "input": {
+      "stateRoot": "0x2bbb271c29340f719eb06571be004908a539ebd17bf8255bd6c2f7ab0c51f07b",
+      "proof": {
+        "address": "0x0102030405060708090a0b0c0d0e0f1011121314",
+        "nonce": "0x0",
+        "balance": "0x0",
+        "storageHash": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+        "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "accountProof": [
+          "0xf86aa120e048077237471699c7c990b1025cce9d38aa8de4a9805f603e3dae884232b859b846f8448080a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a0c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+        ],
+        "storageProof": [
+          {
+            "key": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "value": "0x0",
+            "proof": []
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "leaf",
+    "input": {
+      "stateRoot": "0xd6e0bf8282751ec6c2d8dd5142e1c696e9269b51509371d709a7c87900186558",
+      "proof": {
+        "address": "0x0102030405060708090a0b0c0d0e0f1011121314",
+        "nonce": "0x0",
+        "balance": "0x0",
+        "storageHash": "0xf38f9f63c760d088d7dd04f743619b6291f63beebd8bdf530628f90e9cfa52d7",
+        "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "accountProof": [
+          "0xf86aa120e048077237471699c7c990b1025cce9d38aa8de4a9805f603e3dae884232b859b846f8448080a0f38f9f63c760d088d7dd04f743619b6291f63beebd8bdf530628f90e9cfa52d7a0c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+        ],
+        "storageProof": [
+          {
+            "key": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "value": "0x0",
+            "proof": [
+              "0xe3a120b10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf601"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "present",
+    "input": {
+      "stateRoot": "0xd6e0bf8282751ec6c2d8dd5142e1c696e9269b51509371d709a7c87900186558",
+      "proof": {
+        "address": "0x0102030405060708090a0b0c0d0e0f1011121314",
+        "nonce": "0x0",
+        "balance": "0x0",
+        "storageHash": "0xf38f9f63c760d088d7dd04f743619b6291f63beebd8bdf530628f90e9cfa52d7",
+        "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "accountProof": [
+          "0xf86aa120e048077237471699c7c990b1025cce9d38aa8de4a9805f603e3dae884232b859b846f8448080a0f38f9f63c760d088d7dd04f743619b6291f63beebd8bdf530628f90e9cfa52d7a0c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+        ],
+        "storageProof": [
+          {
+            "key": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "value": "0x1",
+            "proof": [
+              "0xe3a120b10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf601"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "extension",
+    "input": {
+      "stateRoot": "0xc1f58ea988ca163b093c4246f4d65d1a041a09b85831f22828f9a36ed949d4cb",
+      "proof": {
+        "address": "0x0102030405060708090a0b0c0d0e0f1011121314",
+        "nonce": "0x0",
+        "balance": "0x0",
+        "storageHash": "0x03f8a87fbd072b179d17795710c3a0580d52f0b099ba711bd6ffe662c55c18d5",
+        "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "accountProof": [
+          "0xf86aa120e048077237471699c7c990b1025cce9d38aa8de4a9805f603e3dae884232b859b846f8448080a003f8a87fbd072b179d17795710c3a0580d52f0b099ba711bd6ffe662c55c18d5a0c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+        ],
+        "storageProof": [
+          {
+            "key": "0x000000000000000000000000000000000000000000000000000000000000005d",
+            "value": "0x0",
+            "proof": [
+              "0xe4820029a0cc90f3d41ee9b04c11b0d33e22ae5cc4e59378e162ee747f8e0e8bd0cbfb9236"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "extension-branch",
+    "input": {
+      "stateRoot": "0xc1f58ea988ca163b093c4246f4d65d1a041a09b85831f22828f9a36ed949d4cb",
+      "proof": {
+        "address": "0x0102030405060708090a0b0c0d0e0f1011121314",
+        "nonce": "0x0",
+        "balance": "0x0",
+        "storageHash": "0x03f8a87fbd072b179d17795710c3a0580d52f0b099ba711bd6ffe662c55c18d5",
+        "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "accountProof": [
+          "0xf86aa120e048077237471699c7c990b1025cce9d38aa8de4a9805f603e3dae884232b859b846f8448080a003f8a87fbd072b179d17795710c3a0580d52f0b099ba711bd6ffe662c55c18d5a0c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+        ],
+        "storageProof": [
+          {
+            "key": "0x00000000000000000000000000000000000000000000000000000000000001f9",
+            "value": "0x0",
+            "proof": [
+              "0xe4820029a0cc90f3d41ee9b04c11b0d33e22ae5cc4e59378e162ee747f8e0e8bd0cbfb9236",
+              "0xf851a0d767d3acc2a52b4f67ed1196626762164af551262de3c7ac4d55e9a43c4ca0fe808080808080808080a0e11ec90c4cfba87a9f8f24156757e2aaa84e788b63932c3082316482d8ed6a29808080808080"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "branch",
+    "input": {
+      "stateRoot": "0x99bd109bc8caf660a8695e9504f5a641f40151bbc1f0346fac19e644b033a944",
+      "proof": {
+        "address": "0x0102030405060708090a0b0c0d0e0f1011121314",
+        "nonce": "0x0",
+        "balance": "0x0",
+        "storageHash": "0xa7abcc6e1e344abdd761f5e3b08dfacd08b68a6533969baeeaf61e80fde624e4",
+        "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        "accountProof": [
+          "0xf86aa120e048077237471699c7c990b1025cce9d38aa8de4a9805f603e3dae884232b859b846f8448080a0a7abcc6e1e344abdd761f5e3b08dfacd08b68a6533969baeeaf61e80fde624e4a0c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+        ],
+        "storageProof": [
+          {
+            "key": "0x0000000000000000000000000000000000000000000000000000000000000002",
+            "value": "0x0",
+            "proof": [
+              "0xf8518080a04fc5f13ab2f9ba0c2da88b0151ab0e7cf4d85d08cca45ccd923c6ab76323eb288080808080808080a0f4984a11f61a2921456141df88de6e1a710d28681b91af794c5a721e47839cd78080808080"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "account-empty",
+    "input": {
+      "stateRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+      "proof": {
+        "address": "0x0102030405060708090a0b0c0d0e0f1011121314",
+        "accountProof": []
+      }
+    }
+  },
+  {
+    "name": "account-leaf",
+    "input": {
+      "stateRoot": "0x2bbb271c29340f719eb06571be004908a539ebd17bf8255bd6c2f7ab0c51f07b",
+      "proof": {
+        "address": "0x0002030405060708090a0b0c0d0e0f1011121314",
+        "accountProof": [
+          "0xf86aa120e048077237471699c7c990b1025cce9d38aa8de4a9805f603e3dae884232b859b846f8448080a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a0c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+        ]
+      }
+    }
+  }
+]

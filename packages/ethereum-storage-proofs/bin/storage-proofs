@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+"""One entry point for the Ethereum proof preparation and proving commands."""
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+ROOT=Path(__file__).resolve().parents[1]
+COMMANDS={
+ 'inspect':('node','scripts/inspect-proof.mjs'),
+ 'fetch':('node','scripts/fetch-proof.mjs'),
+ 'convert':('python3','input-preparation/prepare-circuit.py'),
+ 'profile':('python3','input-preparation/auto-profile.py'),
+ 'generate':('python3','input-preparation/profile.py'),
+ 'generate-absence':('python3','input-preparation/absence-profile.py'),
+ 'generate-receipt':('python3','input-preparation/receipt-profile.py'),
+ 'generate-batch':('python3','input-preparation/batch-profile.py'),
+ 'prepare':('python3','input-preparation/prepare-circuit.py'),
+ 'prove':('python3','proving/prove.py'),
+ 'link':('python3','proving/link-proofs.py'),
+}
+if len(sys.argv)<2 or sys.argv[1] in ['-h','--help','help']:
+ print(__doc__+'\n\n'+ '\n'.join(COMMANDS)+'\ncheck-export\ndoctor\n\nRun a command with --help for its options. inspect uses positional input, scope, catalogue.')
+ sys.exit(0)
+command=sys.argv[1]
+if command=='doctor':
+ pin=json.loads((ROOT/'toolchain.json').read_text())
+ print(json.dumps(pin,indent=2))
+ nargo=os.environ.get('NARGO_BIN',str(ROOT/'.tools/noir/nargo'))
+ result=subprocess.run([nargo,'--version'],capture_output=True,text=True)
+ print(result.stdout.strip())
+ sys.exit(0 if result.returncode==0 and pin['noir_commit'] in result.stdout else 1)
+if command=='check-export':
+ if len(sys.argv)!=3: sys.exit('Usage: storage-proofs check-export recursive_proof.json (structural checks only)')
+ os.execvp('node',['node',str(ROOT/'input-preparation/check-export.mjs'),sys.argv[2]])
+if command not in COMMANDS: sys.exit('Unknown command: '+command)
+exe,script=COMMANDS[command]
+os.execvp(exe,[exe,str(ROOT/script),*sys.argv[2:]])

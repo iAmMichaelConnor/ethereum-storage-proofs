@@ -1,0 +1,9 @@
+[workspace]
+members = [
+    "storage_proofs/contract",
+    "storage_proofs/tests",
+    "event_proof/contract",
+    "event_proof/tests",
+    "registry_gate/contract",
+    "registry_gate/tests",
+]

@@ -1,0 +1,36 @@
+ethereum-storage-proofs
+Copyright 2026 Michael Connor
+
+This product includes material adapted from third parties. All of it is
+licensed under the Apache License, Version 2.0, whose text is in LICENSE.
+
+1. Aztec Labs, aztec-packages: storage_proof_test_contract/src/storage_proofs
+   (contributed by Alvaro Rodriguez), as found at
+   https://github.com/aztec-labs-eng/aztec-node/tree/ea76ae8eadffbf181cd00764da3d8ff565021070/noir-projects/noir-contracts/contracts/test/storage_proof_test_contract/src/storage_proofs
+   Copyright Aztec Labs. Adapted into
+   noir/ethereum_proofs/src/{account_hash,slot_hash,bytes_sink,utils}.nr, the
+   KeccakHasher of noir/ethereum_keccak/src/lib.nr and the Account and
+   StorageSlot structs of noir/ethereum_types/src/lib.nr.
+
+2. noir-lang/keccak256 (https://github.com/noir-lang/keccak256), commit
+   bb2b579738fd627da7e1d7fcada304fdaba22e7e, copied unmodified to
+   vendor/keccak256. Only Nargo.toml, README.md, LICENSE and src/ are copied.
+   scripts/vendor.sh rebuilds the directory from that commit and checks that
+   it matches.
+
+3. joeandrews/noir-storage-proofs: lib/src/slot_key.nr at commit
+   b4792c374399d6e07f2522a36a1002a35789412c,
+   https://github.com/joeandrews/noir-storage-proofs/tree/b4792c374399d6e07f2522a36a1002a35789412c
+   Copyright 2023 Spilsbury Holdings Ltd. Adapted into
+   noir/ethereum_proofs/src/slot_key.nr.
+
+4. reference/aztec-node/storage_proof.json is an unmodified copy of a saved
+   Ethereum mainnet storage proof (block 24418695) from Aztec Labs' end-to-end
+   test fixtures,
+   https://github.com/aztec-labs-eng/aztec-node/blob/ea76ae8eadffbf181cd00764da3d8ff565021070/yarn-project/end-to-end/src/automine/contracts/fixtures/storage_proof.json
+   It is used only to generate tests and test fixtures (including
+   packages/ethereum-storage-proofs/tests/fixtures/rpc.json); no Noir package or SDK code
+   depends on it.
+
+Ecosystem logos under docs/assets are the property of their owners; sources
+and terms are in docs/assets/README.md.

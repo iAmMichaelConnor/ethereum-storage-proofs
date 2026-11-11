@@ -1,0 +1,29 @@
+{
+  "stateRoot": "0x183a228eab99c866cd7a6dcfaf4cd50247620b082c16cf19b3356811a86843c9",
+  "proof": {
+    "address": "0x4242424242424242424242424242424242424242",
+    "nonce": "0x1",
+    "balance": "0x0",
+    "storageHash": "0x06cf187cacc90d048ba77d8a33b167834541151c3d18ebc12331db089db8e379",
+    "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+    "accountProof": [
+      "0xf86aa120352a47fc6863b89a6b51890ef3c1550d560886c027141d2058ba1e2d4c66d99ab846f8440180a006cf187cacc90d048ba77d8a33b167834541151c3d18ebc12331db089db8e379a0c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+    ],
+    "storageProof": [
+      {
+        "key": "0x0000000000000000000000000000000000000000000000000000000000000063",
+        "value": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "proof": [
+          "0xf844a120d86d8a3f7c82c89ed8e04140017aa108a0a1469249f92c8f022b9dbafa87b883a1a0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        ]
+      },
+      {
+        "key": "0x0000000000000000000000000000000000000000000000000000000000000063",
+        "value": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "proof": [
+          "0xf844a120d86d8a3f7c82c89ed8e04140017aa108a0a1469249f92c8f022b9dbafa87b883a1a0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        ]
+      }
+    ]
+  }
+}

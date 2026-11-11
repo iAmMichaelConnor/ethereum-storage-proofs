@@ -1,0 +1,8 @@
+[package]
+name = "ethereum_keccak"
+type = "lib"
+authors = ["Michael Connor"]
+compiler_version = ">=1.0.0"
+
+[dependencies]
+keccak256 = { path = "../../vendor/keccak256" }

@@ -1,0 +1,55 @@
+{
+  "name": "ethereum-storage-proofs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Typed Ethereum proof validation, witness preparation and proving orchestration for the ethereum-storage-proofs Noir libraries",
+  "license": "Apache-2.0",
+  "author": "Michael Connor",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iAmMichaelConnor/ethereum-storage-proofs",
+    "directory": "packages/ethereum-storage-proofs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.mjs"
+    }
+  },
+  "bin": {
+    "storage-proofs": "./bin/storage-proofs"
+  },
+  "files": [
+    "input-preparation/",
+    "proving/",
+    "bin/",
+    "scripts/",
+    "index.mjs",
+    "index.d.ts",
+    "tool-runner.mjs",
+    "toolchain.json",
+    "dist/library/",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "scripts": {
+    "build": "python3 scripts/package-assets.py",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "npm run test:js && npm run test:python",
+    "test:js": "node --test tests/input-preparation/*.test.mjs tests/proving/*.test.mjs",
+    "test:python": "python3 -B -m unittest discover -s tests/proving -p 'test_*.py'",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "@ethereumjs/rlp": "5.0.2",
+    "@ethereumjs/trie": "6.2.1",
+    "ethereum-cryptography": "2.2.1"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
+}

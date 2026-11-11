@@ -1,0 +1,12 @@
+{
+  "name": "ethereum-storage-proofs-generators",
+  "private": true,
+  "type": "module",
+  "description": "Independent reference implementations used to generate the Noir test fixtures",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@ethereumjs/rlp": "5.0.2",
+    "@ethereumjs/trie": "6.2.1",
+    "ethereum-cryptography": "2.2.1"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "ethereum-oracle-tests",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "description": "Reference oracle for the Ethereum differential tests",
+  "dependencies": {
+    "@ethereumjs/rlp": "5.0.2",
+    "@ethereumjs/trie": "6.2.1",
+    "ethereum-cryptography": "2.2.1"
+  }
+}
