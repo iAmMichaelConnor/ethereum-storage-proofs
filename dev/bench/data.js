@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794414625073,
+  "lastUpdate": 1794414631111,
   "repoUrl": "https://github.com/iAmMichaelConnor/ethereum-storage-proofs",
   "entries": {
     "ACIR Opcodes": [
@@ -380,6 +380,172 @@ window.BENCHMARK_DATA = {
             "name": "threshold_d8/main",
             "value": 671754,
             "unit": "circuit_size"
+          }
+        ]
+      }
+    ],
+    "Brillig Bytecode Size": [
+      {
+        "commit": {
+          "author": {
+            "email": "mike@aztec.foundation",
+            "name": "iAmMichaelConnor",
+            "username": "iAmMichaelConnor"
+          },
+          "committer": {
+            "email": "mike@aztec.foundation",
+            "name": "iAmMichaelConnor",
+            "username": "iAmMichaelConnor"
+          },
+          "distinct": true,
+          "id": "58a9f55bac5797af226c359434fe2572b1aebb47",
+          "message": "ci: make the benchmark job pass on hosted runners",
+          "timestamp": "2026-11-11T16:29:15Z",
+          "tree_id": "36f75acc3dc6f180ad2431e6aa363f003ffe7cf7",
+          "url": "https://github.com/iAmMichaelConnor/ethereum-storage-proofs/commit/58a9f55bac5797af226c359434fe2572b1aebb47"
+        },
+        "date": 1794414631091,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "account_absent",
+            "value": 6308,
+            "unit": "opcodes"
+          },
+          {
+            "name": "account_balance",
+            "value": 4785,
+            "unit": "opcodes"
+          },
+          {
+            "name": "account_d8",
+            "value": 15577,
+            "unit": "opcodes"
+          },
+          {
+            "name": "batch4",
+            "value": 5206,
+            "unit": "opcodes"
+          },
+          {
+            "name": "erc20_balance",
+            "value": 8428,
+            "unit": "opcodes"
+          },
+          {
+            "name": "event",
+            "value": 11069,
+            "unit": "opcodes"
+          },
+          {
+            "name": "keccak256_135",
+            "value": 716,
+            "unit": "opcodes"
+          },
+          {
+            "name": "keccak256_32",
+            "value": 613,
+            "unit": "opcodes"
+          },
+          {
+            "name": "keccak256_532",
+            "value": 1114,
+            "unit": "opcodes"
+          },
+          {
+            "name": "l1_d8",
+            "value": 30979,
+            "unit": "opcodes"
+          },
+          {
+            "name": "l1_mixed",
+            "value": 27441,
+            "unit": "opcodes"
+          },
+          {
+            "name": "l1_zero",
+            "value": 12854,
+            "unit": "opcodes"
+          },
+          {
+            "name": "receipt_summary",
+            "value": 8672,
+            "unit": "opcodes"
+          },
+          {
+            "name": "slot_mapping",
+            "value": 566,
+            "unit": "opcodes"
+          },
+          {
+            "name": "ssz_branch_5",
+            "value": 805,
+            "unit": "opcodes"
+          },
+          {
+            "name": "ssz_deneb_anchor",
+            "value": 3799,
+            "unit": "opcodes"
+          },
+          {
+            "name": "storage_d8",
+            "value": 15745,
+            "unit": "opcodes"
+          },
+          {
+            "name": "storage_deep",
+            "value": 28825,
+            "unit": "opcodes"
+          },
+          {
+            "name": "storage_general_d3_b135",
+            "value": 3666,
+            "unit": "opcodes"
+          },
+          {
+            "name": "storage_general_d8_b532",
+            "value": 7638,
+            "unit": "opcodes"
+          },
+          {
+            "name": "storage_hashed_d1_b532",
+            "value": 3529,
+            "unit": "opcodes"
+          },
+          {
+            "name": "storage_hashed_d3_b135",
+            "value": 3490,
+            "unit": "opcodes"
+          },
+          {
+            "name": "storage_hashed_d3_b532",
+            "value": 4682,
+            "unit": "opcodes"
+          },
+          {
+            "name": "storage_hashed_d8_b532",
+            "value": 7462,
+            "unit": "opcodes"
+          },
+          {
+            "name": "storage_mixed_d7_b532",
+            "value": 12106,
+            "unit": "opcodes"
+          },
+          {
+            "name": "storage_small",
+            "value": 7698,
+            "unit": "opcodes"
+          },
+          {
+            "name": "storage_zero",
+            "value": 6536,
+            "unit": "opcodes"
+          },
+          {
+            "name": "threshold_d8",
+            "value": 15751,
+            "unit": "opcodes"
           }
         ]
       }
