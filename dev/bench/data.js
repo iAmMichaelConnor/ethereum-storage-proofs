@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794417729111,
+  "lastUpdate": 1794417738622,
   "repoUrl": "https://github.com/iAmMichaelConnor/ethereum-storage-proofs",
   "entries": {
     "ACIR Opcodes": [
@@ -783,6 +783,170 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/iAmMichaelConnor/ethereum-storage-proofs/commit/58a9f55bac5797af226c359434fe2572b1aebb47"
         },
         "date": 1794414631091,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "account_absent",
+            "value": 6308,
+            "unit": "opcodes"
+          },
+          {
+            "name": "account_balance",
+            "value": 4785,
+            "unit": "opcodes"
+          },
+          {
+            "name": "account_d8",
+            "value": 15577,
+            "unit": "opcodes"
+          },
+          {
+            "name": "batch4",
+            "value": 5206,
+            "unit": "opcodes"
+          },
+          {
+            "name": "erc20_balance",
+            "value": 8428,
+            "unit": "opcodes"
+          },
+          {
+            "name": "event",
+            "value": 11069,
+            "unit": "opcodes"
+          },
+          {
+            "name": "keccak256_135",
+            "value": 716,
+            "unit": "opcodes"
+          },
+          {
+            "name": "keccak256_32",
+            "value": 613,
+            "unit": "opcodes"
+          },
+          {
+            "name": "keccak256_532",
+            "value": 1114,
+            "unit": "opcodes"
+          },
+          {
+            "name": "l1_d8",
+            "value": 30979,
+            "unit": "opcodes"
+          },
+          {
+            "name": "l1_mixed",
+            "value": 27441,
+            "unit": "opcodes"
+          },
+          {
+            "name": "l1_zero",
+            "value": 12854,
+            "unit": "opcodes"
+          },
+          {
+            "name": "receipt_summary",
+            "value": 8672,
+            "unit": "opcodes"
+          },
+          {
+            "name": "slot_mapping",
+            "value": 566,
+            "unit": "opcodes"
+          },
+          {
+            "name": "ssz_branch_5",
+            "value": 805,
+            "unit": "opcodes"
+          },
+          {
+            "name": "ssz_deneb_anchor",
+            "value": 3799,
+            "unit": "opcodes"
+          },
+          {
+            "name": "storage_d8",
+            "value": 15745,
+            "unit": "opcodes"
+          },
+          {
+            "name": "storage_deep",
+            "value": 28825,
+            "unit": "opcodes"
+          },
+          {
+            "name": "storage_general_d3_b135",
+            "value": 3666,
+            "unit": "opcodes"
+          },
+          {
+            "name": "storage_general_d8_b532",
+            "value": 7638,
+            "unit": "opcodes"
+          },
+          {
+            "name": "storage_hashed_d1_b532",
+            "value": 3529,
+            "unit": "opcodes"
+          },
+          {
+            "name": "storage_hashed_d3_b135",
+            "value": 3490,
+            "unit": "opcodes"
+          },
+          {
+            "name": "storage_hashed_d3_b532",
+            "value": 4682,
+            "unit": "opcodes"
+          },
+          {
+            "name": "storage_hashed_d8_b532",
+            "value": 7462,
+            "unit": "opcodes"
+          },
+          {
+            "name": "storage_mixed_d7_b532",
+            "value": 12106,
+            "unit": "opcodes"
+          },
+          {
+            "name": "storage_small",
+            "value": 7698,
+            "unit": "opcodes"
+          },
+          {
+            "name": "storage_zero",
+            "value": 6536,
+            "unit": "opcodes"
+          },
+          {
+            "name": "threshold_d8",
+            "value": 15751,
+            "unit": "opcodes"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "41898282+github-actions[bot]@users.noreply.github.com",
+            "name": "github-actions[bot]",
+            "username": "github-actions[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f40386adc79aafb8c5716eb25fc32259a4d7125e",
+          "message": "chore: Release 0.1.0 (#1)\n\nCo-authored-by: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+          "timestamp": "2026-11-11T17:19:40Z",
+          "tree_id": "2b35da4723a45658fb419b5118fd294ce03fecb0",
+          "url": "https://github.com/iAmMichaelConnor/ethereum-storage-proofs/commit/f40386adc79aafb8c5716eb25fc32259a4d7125e"
+        },
+        "date": 1794417738592,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
