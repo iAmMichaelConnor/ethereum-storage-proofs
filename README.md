@@ -48,6 +48,7 @@ replay rules to accept, is the application's job. Read the
 | --- | --- |
 | [`ethereum_proofs`](noir/ethereum_proofs) | Account and storage inclusion (`proof`), shared-node batches (`batch`), absence (`absence`), receipts and events (`receipts`, `events`), RLP framing (`rlp`), Solidity slot keys (`slot_key`), leaf encoders (`encoding`) |
 | [`ethereum_recursive_proofs`](noir/ethereum_recursive_proofs) | Claims, domain-separated statements and UltraHonk recursive consumers, including linked app and user proofs |
+| [`ethereum_public_proofs`](noir/ethereum_public_proofs) | Account and storage inclusion in unconstrained code, for Aztec public functions: packed inputs hashed with the AVM's Keccak opcode |
 | [`ethereum_ssz`](noir/ethereum_ssz) | SHA-256 SSZ branches and the Deneb/Electra/Fulu execution-payload anchor |
 | [`ethereum_keccak`](noir/ethereum_keccak) | Keccak-256 over bounded buffers, safe under a disabled caller, and a streaming `KeccakHasher` |
 | [`ethereum_types`](noir/ethereum_types) | `Account`, `StorageSlot` and canonical quantity conversions |
@@ -55,8 +56,8 @@ replay rules to accept, is the application's job. Read the
 
 | Claim | API (direct; recursive) | What the caller still supplies |
 | --- | --- | --- |
-| Account exists with given fields | `verify_account_proof`; `verify_account_recursive_proof` | Authenticated state root, intended address |
-| Nonzero storage value(s) | `verify_storage_proof`, `verify_account_and_storage_proof`, `batch`; `verify_storage_recursive_proof`, `verify_l1_recursive_proof`, `verify_batch_storage_recursive_proof` | Root and account policy, [slot key](docs/proofs.md#slot-keys-and-conversions), authorized producer key |
+| Account exists with given fields | `verify_account_proof`; `verify_account_recursive_proof`; in public functions `ethereum_public_proofs::verify_account` | Authenticated state root, intended address |
+| Nonzero storage value(s) | `verify_storage_proof`, `verify_account_and_storage_proof`, `batch`; `verify_storage_recursive_proof`, `verify_l1_recursive_proof`, `verify_batch_storage_recursive_proof`; in public functions `ethereum_public_proofs::verify_storage`, `verify_account_and_storage` | Root and account policy, [slot key](docs/proofs.md#slot-keys-and-conversions), authorized producer key |
 | Storage value at least a minimum (full uint256) | `verify_threshold_recursive_proof` | Slot and minimum ([threshold semantics](docs/proofs.md#recursive-proofs)) |
 | Zero slot, absent account, present account with a zero slot | `absence`; `ethereum_recursive_proofs::absence` | Root and key policy |
 | Receipt or exact event log | `verify_receipt`, `verify_event`; `ethereum_recursive_proofs::receipts` | Authenticated receipts root, transaction index, receipt-local log index |
@@ -77,6 +78,7 @@ tests of its logic:
 | [`storage_proofs`](examples/storage_proofs) | Verifies an app account proof and a user batch proof recursively, against producer keys and a state root the deployer pins |
 | [`event_proof`](examples/event_proof) | Applies an effect once per Ethereum log of one kind, proven under the receipts root of a pinned block |
 | [`registry_gate`](examples/registry_gate) | Admits the Aztec addresses an L1 registry mapping lists, proven under a pinned state root |
+| [`public_proofs`](examples/public_proofs) | Proves a slot under a recorded state root in a public function, or proves the slot in private and only its contract's account in public |
 
 ## Compatibility
 
@@ -106,6 +108,7 @@ this repository:
 [dependencies]
 ethereum_proofs = { git = "https://github.com/iAmMichaelConnor/ethereum-storage-proofs", tag = "v0.1.0", directory = "noir/ethereum_proofs" }
 ethereum_recursive_proofs = { git = "https://github.com/iAmMichaelConnor/ethereum-storage-proofs", tag = "v0.1.0", directory = "noir/ethereum_recursive_proofs" }
+ethereum_public_proofs = { git = "https://github.com/iAmMichaelConnor/ethereum-storage-proofs", tag = "v0.1.0", directory = "noir/ethereum_public_proofs" }
 ```
 
 `ethereum_proofs` re-exports `ethereum_types` (as `types`) and `ethereum_keccak`
@@ -238,6 +241,24 @@ done
 mv noir/export export
 ./scripts/build-brillig-report.sh
 ```
+
+### Public functions
+
+L2 gas of the [`public_proofs`](examples/public_proofs) example's public functions on
+a saved mainnet proof of a USDT balance slot (7 account nodes, 7 storage nodes),
+simulated with Aztec 6.0.0's public transaction simulator on 2026-11-19. The
+counts are the public L2 gas; each transaction also pays a fixed 540,000. A
+transaction's public functions may use at most 6,000,000.
+
+| Function | Proves | Public L2 gas |
+| --- | --- | ---: |
+| `prove_slot` | Account and slot, 10 + 8 node capacity | 4,645,169 |
+| `check_account` | Account only (the slot is proven in private), 10-node capacity | 2,429,243 |
+
+Keccak-f[1600] costs 58,176 L2 gas per 136-byte block and is most of the total:
+an 8-node path of full branch nodes needs about 33 blocks. Every argument field
+costs about 700 L2 gas to decode, so each node of capacity costs about 16,000
+whether used or not. See [public functions](docs/proofs.md#public-functions).
 
 ## Security
 

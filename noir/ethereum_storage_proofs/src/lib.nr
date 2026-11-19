@@ -1,6 +1,7 @@
 //! Facade that re-exports the focused packages in noir/; it implements nothing itself.
 //! It also holds the producer-shape benchmarks and the generated cross-package tests.
 pub use ethereum_proofs::{batch, keccak, proof, types};
+pub use ethereum_public_proofs as public_proof;
 pub use ethereum_recursive_proofs as recursive_proof;
 pub use ethereum_ssz as ssz;
 

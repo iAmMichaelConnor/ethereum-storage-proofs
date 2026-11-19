@@ -6,4 +6,6 @@ members = [
     "event_proof/tests",
     "registry_gate/contract",
     "registry_gate/tests",
+    "public_proofs/contract",
+    "public_proofs/tests",
 ]

@@ -1,7 +1,8 @@
 # Claims and Noir API
 
-Every package is an ordinary `type = "lib"` Nargo package with constrained
-functions and no Aztec runtime dependency. The packages are tested with every Noir
+Every package is an ordinary `type = "lib"` Nargo package with no Aztec runtime
+dependency. All of them are constrained except `ethereum_public_proofs`, which is
+for unconstrained code. The packages are tested with every Noir
 release from 1.0.0-rc.3 (the version Aztec 6.0.0 pins) onwards, and with nightly.
 Preconditions of each entry point are in the
 [accepted domains](security-model.md#accepted-input-domains-and-optimization-obligations).
@@ -14,6 +15,7 @@ Preconditions of each entry point are in the
 ethereum_proofs = { git = "https://github.com/iAmMichaelConnor/ethereum-storage-proofs", tag = "v0.1.0", directory = "noir/ethereum_proofs" }
 ethereum_recursive_proofs = { git = "https://github.com/iAmMichaelConnor/ethereum-storage-proofs", tag = "v0.1.0", directory = "noir/ethereum_recursive_proofs" }
 ethereum_ssz = { git = "https://github.com/iAmMichaelConnor/ethereum-storage-proofs", tag = "v0.1.0", directory = "noir/ethereum_ssz" }
+ethereum_public_proofs = { git = "https://github.com/iAmMichaelConnor/ethereum-storage-proofs", tag = "v0.1.0", directory = "noir/ethereum_public_proofs" }
 ```
 
 | Package | Public surface | Dependencies |
@@ -22,8 +24,9 @@ ethereum_ssz = { git = "https://github.com/iAmMichaelConnor/ethereum-storage-pro
 | `ethereum_keccak` | `keccak256`, `keccak256_limbs`, streaming `KeccakHasher` | Pinned `keccak256` |
 | `ethereum_recursive_proofs` | Claims, statements, predicates and recursive consumers; `receipts`, `absence` | Types + pinned `poseidon` |
 | `ethereum_ssz` | SHA-256 branches and the Deneb execution anchor | None |
+| `ethereum_public_proofs` | Unconstrained `verify_account`, `verify_storage`, `verify_account_and_storage`, `verify_path` and leaf checks over packed inputs; `PublicAccount`; `pack` | `ethereum_proofs` (for `pack`) |
 | `ethereum_types` | `Account`, `StorageSlot` and canonical numeric conversions | None |
-| `ethereum_storage_proofs` | Facade re-exporting all of the above, including `recursive_proof` and `ssz` | Packages above |
+| `ethereum_storage_proofs` | Facade re-exporting all of the above, including `recursive_proof`, `public_proof` and `ssz` | Packages above |
 
 `ethereum_proofs::types` re-exports the canonical types, so a direct
 `ethereum_types` dependency is needed only by types-only consumers. Nargo's `git`
@@ -366,6 +369,67 @@ check. Soundness needs an Aztec network verifier with the Goblin fixes of
 aztec-packages v6.0.0 (present in the pinned backend, absent from v6.0.0-rc.6 and
 earlier). Key binding is a backend premise:
 [recursive proofs](security-model.md#recursive-proofs).
+
+## Public functions
+
+An Aztec public function runs on the AVM, where every instruction costs L2 gas
+and a transaction's public functions may use at most 6,000,000. The constrained
+verifiers above work there but are far too expensive: their byte arrays cost
+hundreds of L2 gas per byte. `ethereum_public_proofs` verifies the same account
+and storage claims in unconstrained code with inputs packed for the AVM:
+
+- A node is its RLP bytes, unchanged, as little-endian 64-bit Keccak lanes,
+  three per field: 23 fields hold up to 543 bytes. The verifier absorbs each
+  136-byte block with the AVM's Keccak-f[1600] opcode, compares the digest with
+  the parent's reference, and only then reads the child it descends into.
+- An account is eight fields of integers (`PublicAccount::from_fields`): address,
+  nonce, the balance as two 128-bit halves, and the storage and code hashes. The
+  leaf is encoded from these integers, so it is canonical by construction.
+- A storage value is two 128-bit halves.
+
+```rust
+use ethereum_public_proofs::{NODE_FIELDS, PublicAccount, verify_account_and_storage};
+
+#[external("public")]
+fn prove_slot(
+    account: [Field; 8],
+    account_nodes: [[Field; NODE_FIELDS]; 10],
+    account_count: u32,
+    slot_key: [u8; 32],
+    value_high: u128,
+    value_low: u128,
+    storage_nodes: [[Field; NODE_FIELDS]; 8],
+    storage_count: u32,
+) {
+    let root = /* an authenticated state root, read from contract storage */;
+    verify_account_and_storage(root, PublicAccount::from_fields(account), account_nodes,
+        account_count, slot_key, value_high, value_low, storage_nodes, storage_count);
+}
+```
+
+The SDK's `preparePublicAccount` and `preparePublicStorage` produce these
+arguments from `eth_getProof`, and `pack::pack_node` converts an `EncodedNode`
+in Noir. Every entry point is an `unconstrained fn`: calling one from a circuit
+needs an `unsafe` block and proves nothing. `verify_path` with
+`verify_account_leaf` or `verify_storage_leaf` composes a path with its leaf;
+the path end carries the key it walked, and the leaf checks reject another.
+
+Public-function arguments are public. A slot proven in public reveals the
+contract, the slot and its value. To keep the slot and value private, prove the
+storage path in a private function with `ethereum_proofs`, and enqueue a public
+call that proves the account with the same storage root, as the
+[`public_proofs`](../examples/public_proofs) example does: the contract, its
+storage root and the block are then public, the slot and value are not. A public
+function can also read the state root from contract storage, so roots can be
+recorded as they arrive instead of fixed at deployment; who may record them is
+the application's trust assumption.
+
+The costs are in the [README benchmarks](../README.md#public-functions). Size the
+node capacities to the paths you accept: each unused node slot still costs its
+argument decoding. The package proves inclusion of nonzero values only; absence,
+receipts and events have no public form. An embedded (shorter than 32 bytes)
+leaf is supported; an embedded branch or extension is rejected, which needs two
+keys sharing about 56 nibbles of their Keccak hashes.
 
 ## Consumer obligations
 
