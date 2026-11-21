@@ -114,7 +114,7 @@ assert.equal(RLP.decode(evenProof[0])[0][0], 0x00);
 storageTest("even_extension", even.root(), word(1), evenValue, evenProof.slice(0, -1));
 
 // Leaf-only tries cover the RLP integer boundaries and a zero-node path.
-for (const v of [1n, 127n, 128n, 255n, 256n, (1n << 256n) - 1n]) {
+for (const v of [1n, 127n, 128n, 255n, 256n, (1n << 64n) - 1n, 1n << 64n, (1n << 128n) - 1n, 1n << 128n, (1n << 256n) - 1n]) {
   let h = v.toString(16);
   if (h.length % 2) h = "0" + h;
   const bytes = Uint8Array.from(Buffer.from(h, "hex"));

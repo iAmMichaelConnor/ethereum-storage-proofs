@@ -58,33 +58,45 @@ unconstrained fn hash_lanes(first: Field, last: Field) -> [u64; 4] {
     [lane0, lane1, lane2, lane3]
 }
 
-/// Big-endian bytes of `high * 2^128 + low`.
-unconstrained fn word_bytes(high: u128, low: u128) -> [u8; 32] {
-    let high_bytes: [u8; 16] = (high as Field).to_be_bytes();
-    let low_bytes: [u8; 16] = (low as Field).to_be_bytes();
-    let mut bytes = [0; 32];
-    for i in 0..16 {
-        bytes[i] = high_bytes[i];
-        bytes[16 + i] = low_bytes[i];
+/// Minimal big-endian length in bytes of `x` (0 for zero).
+unconstrained fn byte_length(x: u128) -> u32 {
+    let mut length = 0;
+    let mut rest = x;
+    if rest >= 0x10000000000000000 {
+        length += 8;
+        rest /= 0x10000000000000000;
     }
-    bytes
+    if rest >= 0x100000000 {
+        length += 4;
+        rest /= 0x100000000;
+    }
+    if rest >= 0x10000 {
+        length += 2;
+        rest /= 0x10000;
+    }
+    if rest >= 0x100 {
+        length += 1;
+        rest /= 0x100;
+    }
+    if rest != 0 {
+        length += 1;
+    }
+    length
 }
 
-/// Index of the first nonzero byte, or N for zero.
-unconstrained fn first_nonzero<let N: u32>(bytes: [u8; N]) -> u32 {
-    let mut start = N;
-    for i in 0..N {
-        if (start == N) & (bytes[i] != 0) {
-            start = i;
-        }
+/// Minimal big-endian length in bytes of `high * 2^128 + low` (0 for zero).
+unconstrained fn word_length(high: u128, low: u128) -> u32 {
+    if high != 0 {
+        16 + byte_length(high)
+    } else {
+        byte_length(low)
     }
-    start
 }
 
-/// RLP length of the minimal big-endian integer `bytes[start..]`.
-unconstrained fn integer_rlp_length<let N: u32>(bytes: [u8; N], start: u32) -> u32 {
-    let length = N - start;
-    if (length == 0) | ((length == 1) & (bytes[N - 1] < 0x80)) {
+/// RLP length of the minimal big-endian integer of `length` bytes whose low
+/// 128 bits are `low`.
+unconstrained fn integer_rlp_length(length: u32, low: u128) -> u32 {
+    if (length == 0) | ((length == 1) & (low < 0x80)) {
         1
     } else {
         length + 1
@@ -100,15 +112,23 @@ unconstrained fn add_bytes<S: Sink, let N: u32>(bytes: [u8; N], mut start: u32, 
     }
 }
 
-unconstrained fn add_integer<S: Sink, let N: u32>(bytes: [u8; N], start: u32, sink: &mut S) {
-    let length = N - start;
+/// Append the RLP of the minimal big-endian integer `high * 2^128 + low`, which
+/// is `length` bytes long.
+unconstrained fn add_integer<S: Sink>(high: u128, low: u128, length: u32, sink: &mut S) {
     if length == 0 {
         sink.add_chunk(0x80, 1);
-    } else if (length == 1) & (bytes[N - 1] < 0x80) {
-        sink.add_chunk(bytes[N - 1] as u64, 1);
+    } else if (length == 1) & (low < 0x80) {
+        sink.add_chunk(low as u64, 1);
     } else {
         sink.add_chunk(0x80 + length as u64, 1);
-        add_bytes(bytes, start, sink);
+        let low_bytes: [u8; 16] = (low as Field).to_be_bytes();
+        if length > 16 {
+            let high_bytes: [u8; 16] = (high as Field).to_be_bytes();
+            add_bytes(high_bytes, 32 - length, sink);
+            add_bytes(low_bytes, 0, sink);
+        } else {
+            add_bytes(low_bytes, 16 - length, sink);
+        }
     }
 }
 
@@ -171,14 +191,14 @@ unconstrained fn encode_account<S: Sink>(
     sink: &mut S,
 ) {
     let (flag, start) = leaf_path(key, nibble);
-    let nonce: [u8; 8] = (account.nonce as Field).to_be_bytes();
-    let nonce_start = first_nonzero(nonce);
-    let balance = word_bytes(account.balance_high, account.balance_low);
-    let balance_start = first_nonzero(balance);
+    let nonce = account.nonce as u128;
+    let nonce_length = byte_length(nonce);
+    let balance_length = word_length(account.balance_high, account.balance_low);
     // [nonce, balance, storage hash, code hash]: 68 to 108 bytes, so both the
     // account list and the leaf value string take a one-byte long-form length.
-    let account_payload =
-        integer_rlp_length(nonce, nonce_start) + integer_rlp_length(balance, balance_start) + 66;
+    let account_payload = integer_rlp_length(nonce_length, nonce)
+        + integer_rlp_length(balance_length, account.balance_low)
+        + 66;
     let leaf_payload = path_rlp_length(start) + account_payload + 4;
     sink.add_chunk(0xf8 | ((leaf_payload as u64) << 8), 2);
     add_path(key, flag, start, sink);
@@ -189,8 +209,13 @@ unconstrained fn encode_account<S: Sink>(
             | ((account_payload as u64) << 24),
         4,
     );
-    add_integer(nonce, nonce_start, sink);
-    add_integer(balance, balance_start, sink);
+    add_integer(0, nonce, nonce_length, sink);
+    add_integer(
+        account.balance_high,
+        account.balance_low,
+        balance_length,
+        sink,
+    );
     sink.add_chunk(0xa0, 1);
     add_lanes(account.storage_hash, sink);
     sink.add_chunk(0xa0, 1);
@@ -200,14 +225,15 @@ unconstrained fn encode_account<S: Sink>(
 unconstrained fn encode_storage<S: Sink>(
     key: [u64; 4],
     nibble: u32,
-    value: [u8; 32],
-    value_start: u32,
+    value_high: u128,
+    value_low: u128,
+    value_length: u32,
     sink: &mut S,
 ) {
     let (flag, start) = leaf_path(key, nibble);
     // The trie stores RLP(RLP(value)); a single byte below 0x80 encodes itself
     // at both levels.
-    let inner_length = integer_rlp_length(value, value_start);
+    let inner_length = integer_rlp_length(value_length, value_low);
     let outer_length = if inner_length == 1 {
         1
     } else {
@@ -223,7 +249,7 @@ unconstrained fn encode_storage<S: Sink>(
     if inner_length != 1 {
         sink.add_chunk(0x80 + inner_length as u64, 1);
     }
-    add_integer(value, value_start, sink);
+    add_integer(value_high, value_low, value_length, sink);
 }
 
 pub(crate) unconstrained fn check_account(
@@ -246,12 +272,18 @@ pub(crate) unconstrained fn check_storage(
     value_high: u128,
     value_low: u128,
 ) {
-    let value = word_bytes(value_high, value_low);
-    let value_start = first_nonzero(value);
-    assert(value_start < 32, "Zero storage value has no leaf");
+    let value_length = word_length(value_high, value_low);
+    assert(value_length != 0, "Zero storage value has no leaf");
     if reference.length == 32 {
         let mut sponge = Sponge::new();
-        encode_storage(key, nibble, value, value_start, &mut sponge);
+        encode_storage(
+            key,
+            nibble,
+            value_high,
+            value_low,
+            value_length,
+            &mut sponge,
+        );
         assert_eq(
             sponge.finish(),
             reference.lanes,
@@ -259,7 +291,14 @@ pub(crate) unconstrained fn check_storage(
         );
     } else {
         let mut matcher = Matcher::new(reference);
-        encode_storage(key, nibble, value, value_start, &mut matcher);
+        encode_storage(
+            key,
+            nibble,
+            value_high,
+            value_low,
+            value_length,
+            &mut matcher,
+        );
         matcher.finish();
     }
 }
