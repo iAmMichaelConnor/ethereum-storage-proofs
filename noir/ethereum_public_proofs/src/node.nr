@@ -184,13 +184,19 @@ unconstrained fn first_block(node: [Field; NODE_FIELDS]) -> [u64; 25] {
 unconstrained fn hash_node(node: [Field; NODE_FIELDS], length: u32) -> [u64; 4] {
     let full = length / RATE;
     let rest = length % RATE;
-    // Every node is at least two bytes, so block 0 always holds data.
+    // The message and its padding fill blocks 0 to `full` (at most 3, as
+    // `length` is below four blocks). Each is absorbed from the node, whose
+    // bytes from `length` on are zero; unrolled, every block's lane positions
+    // are constants.
     let mut state = first_block(node);
-    for block in 1..full + 1 {
-        state = keccakf1600(state);
-        if (block < full) | (rest != 0) {
-            state = absorb(state, node, block);
-        }
+    if full > 0 {
+        state = absorb(keccakf1600(state), node, 1);
+    }
+    if full > 1 {
+        state = absorb(keccakf1600(state), node, 2);
+    }
+    if full > 2 {
+        state = absorb(keccakf1600(state), node, 3);
     }
     state[rest / 8] ^= 1 << ((rest % 8) * 8) as u64;
     state[16] ^= 0x80 << 56;
@@ -369,4 +375,42 @@ pub(crate) unconstrained fn walk<let D: u32>(
         nibble = next;
     }
     (reference, nibble)
+}
+
+/// The packed node of `length` pattern bytes, and the Keccak-256 of those bytes
+/// from the byte-wise sponge.
+unconstrained fn pattern_node(length: u32) -> ([Field; NODE_FIELDS], [u64; 4]) {
+    let mut lanes: [u64; 69] = [0; 69];
+    let mut sponge = crate::sink::Sponge::new();
+    for i in 0..length {
+        let b = ((i * 7 + 3) % 256) as u64;
+        lanes[i / 8] += b << ((i % 8) * 8) as u64;
+        crate::sink::Sink::add_chunk(&mut sponge, b, 1);
+    }
+    let mut node = [0; NODE_FIELDS];
+    for k in 0..NODE_FIELDS {
+        node[k] = lanes[3 * k] as Field
+            + lanes[3 * k + 1] as Field * 0x10000000000000000
+            + lanes[3 * k + 2] as Field * 0x100000000000000000000000000000000;
+    }
+    (node, sponge.finish())
+}
+
+// Lengths on both sides of each block boundary, where the padding moves into a
+// block of its own.
+#[test]
+unconstrained fn hash_node_matches_sponge_at_block_boundaries() {
+    for length in [2, 135, 136, 137, 271, 272, 273, 407, 408, 409, 543] {
+        let (node, digest) = pattern_node(length);
+        assert_eq(hash_node(node, length), digest);
+    }
+}
+
+// A nonzero byte in a padding-only block changes the digest.
+#[test]
+unconstrained fn hash_node_reads_the_padding_block() {
+    let (mut node, digest) = pattern_node(136);
+    // Byte 136 is the low byte of lane 17: field 5, bits 128 to 135.
+    node[5] += 0x100000000000000000000000000000000;
+    assert(hash_node(node, 136) != digest);
 }
