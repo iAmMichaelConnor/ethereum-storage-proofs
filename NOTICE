@@ -11,7 +11,7 @@ licensed under the Apache License, Version 2.0, whose text is in LICENSE.
    noir/ethereum_proofs/src/{account_hash,slot_hash,bytes_sink,utils}.nr, the
    KeccakHasher of noir/ethereum_keccak/src/lib.nr, the Account and
    StorageSlot structs of noir/ethereum_types/src/lib.nr, and the leaf
-   encoders and sponge of noir/ethereum_public_proofs/src/{leaf,sink}.nr.
+   encoders of noir/ethereum_public_proofs/src/leaf.nr.
 
 2. noir-lang/keccak256 (https://github.com/noir-lang/keccak256), commit
    cce7f909fe481dd01ef0f0501510964aef917e68, copied unmodified to

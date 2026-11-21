@@ -20,7 +20,8 @@ const integer = (bytes, length) =>
 
 /** One raw trie node (RLP bytes) as 23 fields: little-endian lanes, three per field. */
 export function packPublicNode(bytes) {
-  assert(bytes.length >= 2 && bytes.length < 544, "Node exceeds capacity");
+  assert(bytes.length >= 2, "Node is too short to be a trie node");
+  assert(bytes.length < 544, "Node exceeds capacity");
   const lanes = Array.from({ length: 69 }, (_, i) => laneOf(bytes, 8 * i));
   return Array.from({ length: PUBLIC_NODE_FIELDS }, (_, k) =>
     three(lanes, 3 * k).toString(),
@@ -29,6 +30,12 @@ export function packPublicNode(bytes) {
 
 /** An account witness (prepareAccount's `account`) as PublicAccount::from_fields input. */
 export function packPublicAccount(account) {
+  // The ranges PublicAccount::from_fields checks.
+  assert(account.address.length === 20, "Address must be 20 bytes");
+  assert(account.nonce_length <= 8, "Nonce exceeds u64");
+  assert(account.balance_length <= 32, "Balance exceeds 32 bytes");
+  for (const lane of [...account.storage_hash, ...account.code_hash])
+    assert(BigInt(lane) < 1n << 64n, "Hash lane exceeds u64");
   const balance = integer(account.balance, account.balance_length);
   const lanes = (root) => root.map(BigInt);
   const s = lanes(account.storage_hash),

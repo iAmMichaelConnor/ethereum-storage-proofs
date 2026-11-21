@@ -25,8 +25,11 @@ pub unconstrained fn pack_node<let B: u32>(node: EncodedNode<B>) -> [Field; NODE
     packed
 }
 
-/// Big-endian `bytes[0..length]` as (high, low) 128-bit halves.
+/// Big-endian `bytes[0..length]` as (high, low) 128-bit halves. `length` must be
+/// at most 32. A nonce is at most 8 bytes, so its high half is zero and its low
+/// half fits a u64.
 pub unconstrained fn quantity_halves<let N: u32>(bytes: [u8; N], length: u32) -> (u128, u128) {
+    assert(length <= 32, "Quantity exceeds 32 bytes");
     let mut high: u128 = 0;
     let mut low: u128 = 0;
     for i in 0..length {

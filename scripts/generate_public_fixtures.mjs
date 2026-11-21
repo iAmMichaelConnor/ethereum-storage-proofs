@@ -393,7 +393,8 @@ selfRootCase(
   sparseKey,
   RLP.encode([Uint8Array.from([0x01, ...evenPath.slice(1)]), evenChild]),
 );
-selfRootCase("empty_extension", "Empty extension", sparseKey, RLP.encode([Uint8Array.from([0x00]), evenChild]));
+selfRootCase("extension_no_nibbles", "Extension path has no nibbles", sparseKey, RLP.encode([Uint8Array.from([0x00]), evenChild]));
+selfRootCase("extension_empty_path", "Extension path is empty", sparseKey, RLP.encode([new Uint8Array(0), evenChild]));
 assert(evenPath[1] !== 0xff);
 selfRootCase(
   "wrong_extension_byte",
@@ -430,6 +431,20 @@ selfRootCase(
   branchKey,
   RLP.encode(branch.map((x, i) => (i === 0 ? new Uint8Array(56).fill(7) : x))),
 );
+
+// A branch of at most 68 bytes takes the short-node scan, which has its own
+// value check. Its only child is a hash at nibble 0.
+const shortBranch = (child, value) =>
+  RLP.encode([child, ...Array(15).fill(new Uint8Array(0)), value]);
+const zeroKey = new Uint8Array(32);
+assert(shortBranch(sparseChild, new Uint8Array([1])).length <= 68);
+selfRootCase("short_branch_value_not_empty", "Branch value is not empty", zeroKey, shortBranch(sparseChild, new Uint8Array([1])));
+// An odd extension of 63 nibbles below a branch would consume the key's last
+// nibble, leaving none for its child. It still fits the short-node scan.
+const longExtension = RLP.encode([Uint8Array.from([0x10, ...Array(31).fill(0)]), sparseChild]);
+assert(longExtension.length <= 68);
+const aboveExtension = shortBranch(keccak256(longExtension), new Uint8Array(0));
+tests += `\n${shouldFail("Extension path is longer than the key")}\nunconstrained fn rejects_extension_longer_than_key() {\n let nodes: [[Field; NODE_FIELDS]; 2] = ${nodesNr([aboveExtension, longExtension])};\n let _ = verify_path(${nr(lanes(keccak256(aboveExtension)))}, ${nr(lanes(zeroKey))}, nodes, 2);\n}\n`;
 
 writeFileSync("noir/ethereum_public_proofs/src/fixtures_tests.nr", tests);
 

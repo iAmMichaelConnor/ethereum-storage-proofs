@@ -97,14 +97,15 @@ impl Matcher {
 impl Sink for Matcher {
     fn add_chunk(&mut self, value: u64, n: u32) {
         for i in 0..n {
-            let expected = lane_byte(self.reference.lanes, self.index);
+            // `finish` also rejects a stream longer than the reference; this
+            // fails at the first extra byte, before reading past the lanes.
             assert(
                 self.index < self.reference.length,
                 "Embedded node differs from its parent reference",
             );
             assert_eq(
                 (value >> (8 * i) as u64) as u8,
-                expected,
+                lane_byte(self.reference.lanes, self.index),
                 "Embedded node differs from its parent reference",
             );
             self.index += 1;

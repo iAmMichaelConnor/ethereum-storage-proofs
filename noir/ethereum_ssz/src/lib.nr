@@ -1,5 +1,8 @@
 //! SSZ SHA256 Merkle inclusion. A trusted SSZ root and the correct schema/index
 //! are caller inputs; this module does not verify beacon consensus or finality.
+//!
+//! For circuits: Noir programs and Aztec private functions. Its L2 gas in an Aztec
+//! public function has not been measured.
 use std::hash::sha256_compression;
 
 /// SHA256(left || right), including the second compression for 64-byte padding.

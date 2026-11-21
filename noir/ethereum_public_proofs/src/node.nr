@@ -246,6 +246,8 @@ unconstrained fn step(
         for _ in 0..selected {
             offset += item_length(byte(node, offset));
         }
+        // Defence in depth: a node that hashes to its parent's reference is a
+        // well-formed branch, whose selected child always starts before its end.
         assert(offset < length, "Node items do not end at its length");
         assert_eq(byte(node, length - 1), 0x80, "Branch value is not empty");
         (branch_child(node, offset), nibble + 1)
@@ -257,8 +259,8 @@ unconstrained fn step(
 /// The reference held by the branch child whose item starts at `offset`.
 unconstrained fn branch_child(node: [Field; NODE_FIELDS], offset: u32) -> Reference {
     let prefix = byte(node, offset);
-    // The fix for the descent bug in the code this is adapted from: an empty
-    // child has no hash to follow, so the walk must stop.
+    // An empty child has no hash to follow: descending past it would let the
+    // prover choose the subtree, so the walk stops.
     assert(prefix != 0x80, "Missing child");
     if prefix == 0xa0 {
         Reference { lanes: lanes_at(node, offset + 1), length: 32 }
@@ -315,7 +317,7 @@ unconstrained fn short_node(
         } else {
             (item0 + 1, (path_prefix - 0x80) as u32)
         };
-        assert(path_length > 0, "Empty extension");
+        assert(path_length > 0, "Extension path is empty");
         let flag = byte(node, path);
         assert(flag >> 4 <= 1, "Expected extension, not leaf");
         if flag >> 4 == 1 {
@@ -323,7 +325,7 @@ unconstrained fn short_node(
             nibble += 1;
         } else {
             assert_eq(flag & 0x0f, 0, "Nonzero extension path padding");
-            assert(path_length > 1, "Empty extension");
+            assert(path_length > 1, "Extension path has no nibbles");
         }
         // An extension must leave at least one nibble for its child.
         assert(nibble + 2 * (path_length - 1) < 64, "Extension path is longer than the key");

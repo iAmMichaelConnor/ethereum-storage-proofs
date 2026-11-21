@@ -68,6 +68,27 @@ Capacities (path depth and bytes per node) are compile-time and fail closed. A
 shape fits the proofs it was sized for, and a third party can lengthen mainnet
 paths: see [choosing capacities](docs/internals.md#choosing-capacities).
 
+### Circuits or public functions
+
+Circuits (Noir programs and Aztec private functions) and Aztec public functions
+need different code. A circuit pays per gate, and its checks are what make the
+proof sound. A public function runs as unconstrained bytecode on the AVM, pays L2
+gas per instruction, and may use at most 6,000,000 per transaction. Pick the
+package by where it runs:
+
+| Package | Circuits: Noir programs, Aztec private functions | Aztec public functions |
+| --- | --- | --- |
+| `ethereum_proofs`, `ethereum_keccak` | Yes: built for gate count | No: correct, but far too costly; a storage proof runs out of L2 gas |
+| `ethereum_recursive_proofs` | Yes: the consumers verify a producer proof in an Aztec private function | No: a public function cannot verify a proof |
+| `ethereum_ssz` | Yes | Not measured |
+| `ethereum_public_proofs` | No: every entry point is `unconstrained`, so it proves nothing in a circuit | Yes: built for L2 gas (account and nonzero storage inclusion only) |
+| `ethereum_types` | Yes | Yes |
+
+To prove a slot privately and touch public state, prove the slot in a private
+function with `ethereum_proofs` and the account in public with
+`ethereum_public_proofs`, as the [`public_proofs`](examples/public_proofs) example
+does. See [public functions](docs/proofs.md#public-functions).
+
 ### Aztec examples
 
 [`examples/`](examples) holds Aztec contracts that use the libraries, each with

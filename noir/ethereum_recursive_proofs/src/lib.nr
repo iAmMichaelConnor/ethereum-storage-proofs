@@ -1,6 +1,8 @@
 //! Poseidon2 UltraHonk recursive proofs for Aztec v6 private callers.
 //! The caller must authorize the producer verification-key hash and authenticate
 //! the root. A witness-supplied key hash alone is not an authorization policy.
+//!
+//! For circuits only: a public function cannot verify a proof.
 use ethereum_types::StorageSlot;
 use poseidon::poseidon2::Poseidon2;
 
