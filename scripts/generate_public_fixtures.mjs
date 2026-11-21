@@ -277,8 +277,16 @@ const forgedItems = RLP.decode(storagePath[lastBranch]);
 forgedItems[empty] = new Uint8Array(32).fill(0x11);
 const forgedNode = RLP.encode(forgedItems);
 const fixture = `let (root, account, account_nodes, account_count, key, high, low, storage_nodes, storage_count) = mainnet();\n let account = PublicAccount::from_fields(account);`;
+const accountLeaf = fromHex(proof.accountProof.at(-1));
+assert(accountLeaf.length > 68);
 const rejections = {
-  // Descending into an empty child: the bug this package fixes.
+  // An account leaf walked as a node: its value item is a long string, which no
+  // branch item is.
+  account_leaf_walked_as_node: [
+    "Unsupported RLP item in node",
+    `let mut nodes = account_nodes;\n nodes[account_count] = ${nr(packNode(accountLeaf))};\n let _ = verify_path(root, account.key_hash(), nodes, account_count + 1);\n let _ = (key, high, low, storage_nodes, storage_count);`,
+  ],
+  // Descending into an empty child would let the prover choose the subtree.
   missing_child: [
     "Missing child",
     `let end = verify_path(account.storage_hash, ${nr(lanes(divergent))}, storage_nodes, storage_count);\n let _ = (end, root, account_nodes, account_count, key, high, low);`,
@@ -404,7 +412,7 @@ selfRootCase(
 );
 selfRootCase(
   "wrong_extension_low_nibble",
-  "Extension path differs from the key",
+  "Extension path low nibble differs from the key",
   sparseKey,
   RLP.encode([Uint8Array.from([0x00, evenPath[1] ^ 0x01]), evenChild]),
 );

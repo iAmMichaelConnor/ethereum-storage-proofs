@@ -1840,6 +1840,41 @@ unconstrained fn noir_packer_matches_fixture() {
     assert_eq(account_fields(PublicAccount::from_fields(account)), account);
 }
 
+#[test(should_fail_with = "Unsupported RLP item in node")]
+unconstrained fn rejects_account_leaf_walked_as_node() {
+    let (root, account, account_nodes, account_count, key, high, low, storage_nodes, storage_count)
+         = mainnet();
+    let account = PublicAccount::from_fields(account);
+    let mut nodes = account_nodes;
+    nodes[account_count] = [
+        688980776445888983225216751502552508628234632079001609976,
+        6221029271722069647511341047277274904522082258006318423558,
+        3943456025917397646349290393797130635591900230671812460032,
+        4680315625802582752051304726440697648299046726556770914228,
+        6190973026266766771,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+    ];
+    let _ = verify_path(root, account.key_hash(), nodes, account_count + 1);
+    let _ = (key, high, low, storage_nodes, storage_count);
+}
+
 #[test(should_fail_with = "Missing child")]
 unconstrained fn rejects_missing_child() {
     let (root, account, account_nodes, account_count, key, high, low, storage_nodes, storage_count)
@@ -2403,7 +2438,7 @@ unconstrained fn rejects_wrong_extension_byte() {
     );
 }
 
-#[test(should_fail_with = "Extension path differs from the key")]
+#[test(should_fail_with = "Extension path low nibble differs from the key")]
 unconstrained fn rejects_wrong_extension_low_nibble() {
     let nodes: [[Field; NODE_FIELDS]; 1] = [[
         501085618661086775152037179752484331822063506158325367524,

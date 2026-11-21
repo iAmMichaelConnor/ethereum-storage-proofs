@@ -395,7 +395,11 @@ unconstrained fn short_node(
         for j in 1..path_length {
             let b = byte(node, path + j);
             assert_eq(b >> 4, nibble_at(key, nibble), "Extension path differs from the key");
-            assert_eq(b & 0x0f, nibble_at(key, nibble + 1), "Extension path differs from the key");
+            assert_eq(
+                b & 0x0f,
+                nibble_at(key, nibble + 1),
+                "Extension path low nibble differs from the key",
+            );
             nibble += 2;
         }
         assert_eq(byte(node, item1), 0xa0, "Expected child hash");
