@@ -334,7 +334,7 @@ unconstrained fn branch_child(node: [Field; NODE_FIELDS], offset: u32) -> Refere
 
 /// A node of at most 68 bytes: an extension, a branch with embedded children,
 /// or a leaf, which is rejected.
-/// Its items are all scanned to tell the two apart.
+/// Its items are all scanned to tell these apart.
 unconstrained fn short_node(
     node: [Field; NODE_FIELDS],
     start: u32,
