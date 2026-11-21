@@ -84,7 +84,9 @@ pub unconstrained fn verify_account<let D: u32>(
     count: u32,
 ) {
     let end = verify_path(state_root, account.key_hash(), nodes, count);
-    verify_account_leaf(end, account);
+    // The path walked account.key_hash(), so the key check of
+    // `verify_account_leaf` holds; skipping it saves hashing the address again.
+    leaf::check_account(end.reference, end.nibble, end.key, account);
 }
 
 /// Prove that `slot_key` holds a nonzero value under an authenticated storage root.
