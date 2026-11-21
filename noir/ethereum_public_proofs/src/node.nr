@@ -48,10 +48,15 @@ unconstrained fn lane(node: [Field; NODE_FIELDS], index: u32) -> u64 {
     }
 }
 
-/// Byte `offset` of a packed node.
+/// Byte `offset` of a packed node: byte `offset % 24` of field `offset / 24`,
+/// counted from its least significant end. One radix decomposition is cheaper
+/// than extracting the lane and shifting. A field of 2^192 or more does not
+/// decompose into 24 bytes and fails here, so a byte read never disagrees with
+/// the hashed lanes (which drop those bits).
 #[inline_always]
 unconstrained fn byte(node: [Field; NODE_FIELDS], offset: u32) -> u8 {
-    (lane(node, offset / 8) >> ((offset % 8) * 8) as u64) as u8
+    let bytes: [u8; 24] = node[offset / 24].to_be_bytes();
+    bytes[23 - offset % 24]
 }
 
 /// Lane `index` of a packed node, or zero past its 69 lanes.
