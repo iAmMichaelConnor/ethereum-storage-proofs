@@ -10,8 +10,10 @@
 //! The node's length comes from its own RLP list header, so it is covered by
 //! the hash. The walk hashes the node, compares the digest with the parent's
 //! reference, and only then parses the child it descends into. Whether a node
-//! is a branch or an extension follows from its item count (17 or 2), so the
-//! prover supplies no node kind.
+//! is a branch, an extension or a leaf follows from its item count (17 or 2)
+//! and its path flag, so the prover supplies no node kind. A leaf can be longer
+//! than an extension, so a long node is checked to have more than two items
+//! before it is read as a branch.
 use crate::NODE_FIELDS;
 use crate::sink::Reference;
 use std::hash::keccakf1600;
@@ -287,9 +289,16 @@ unconstrained fn step(
         (Reference { lanes: lanes_at(node, 4 + 33 * selected), length: 32 }, nibble + 1)
     } else if length > 68 {
         // An extension is at most 68 bytes (a 33-byte path item and a 33-byte
-        // child), so this is a branch. The bytes are the hashed node's, so only
-        // the items up to the selected child need reading.
-        let offset = skip_items(node, start, selected);
+        // child), so this is a branch or a leaf. A leaf's two items fill it;
+        // a branch has fifteen more. The bytes are the hashed node's, so the
+        // items after that and after the selected child need no reading.
+        let after_two = skip_items(node, start, 2);
+        assert(after_two < length, "Expected branch, not leaf");
+        let offset = if selected < 2 {
+            skip_items(node, start, selected)
+        } else {
+            skip_items(node, after_two, selected - 2)
+        };
         // Defence in depth: a node that hashes to its parent's reference is a
         // well-formed branch, whose selected child always starts before its end.
         assert(offset < length, "Node items do not end at its length");
@@ -323,7 +332,8 @@ unconstrained fn branch_child(node: [Field; NODE_FIELDS], offset: u32) -> Refere
     }
 }
 
-/// A node of at most 68 bytes: an extension, or a branch with embedded children.
+/// A node of at most 68 bytes: an extension, a branch with embedded children,
+/// or a leaf, which is rejected.
 /// Its items are all scanned to tell the two apart.
 unconstrained fn short_node(
     node: [Field; NODE_FIELDS],

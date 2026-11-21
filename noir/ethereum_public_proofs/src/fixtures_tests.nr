@@ -2403,6 +2403,41 @@ unconstrained fn rejects_wrong_extension_byte() {
     );
 }
 
+#[test(should_fail_with = "Extension path differs from the key")]
+unconstrained fn rejects_wrong_extension_low_nibble() {
+    let nodes: [[Field; NODE_FIELDS]; 1] = [[
+        501085618661086775152037179752484331822063506158325367524,
+        14858605712598465816396335010904,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+    ]];
+    let _ = verify_path(
+        [1117522223033337686, 3944946871991974873, 9814020288756207880, 2631735664508005054],
+        [4253388672468848305, 3632855077482262054, 8336377290506892300, 17729821500741754669],
+        nodes,
+        1,
+    );
+}
+
 #[test(should_fail_with = "Expected child hash")]
 unconstrained fn rejects_extension_child_not_a_hash() {
     let nodes: [[Field; NODE_FIELDS]; 1] = [[
@@ -2637,5 +2672,65 @@ unconstrained fn rejects_extension_longer_than_key() {
         [0, 0, 0, 0],
         nodes,
         2,
+    );
+}
+
+#[test]
+unconstrained fn single_leaf_trie() {
+    let root =
+        [4766753268561509928, 11555444627599957624, 14445516247183904014, 11205050449731337300];
+    let key = [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0,
+    ];
+    let nodes: [[Field; NODE_FIELDS]; 1] =
+        [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
+    verify_storage(
+        root,
+        key,
+        1251679476038789032753248031248085989,
+        20725051505662361775670513245130550144,
+        nodes,
+        0,
+    );
+}
+
+#[test(should_fail_with = "Expected branch, not leaf")]
+unconstrained fn rejects_long_leaf_read_as_branch() {
+    let nodes: [[Field; NODE_FIELDS]; 1] = [[
+        3671538410759934507953357500824207162773373135501020709880,
+        1655387941647105276148694631681557933695234613288412659784,
+        187686279938312923229792976732538306273442666448663,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+    ]];
+    verify_storage(
+        [4766753268561509928, 11555444627599957624, 14445516247183904014, 11205050449731337300],
+        [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 16,
+        ],
+        0,
+        17853,
+        nodes,
+        1,
     );
 }

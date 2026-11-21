@@ -403,6 +403,12 @@ selfRootCase(
   RLP.encode([Uint8Array.from([0x00, evenPath[1] ^ 0x10]), evenChild]),
 );
 selfRootCase(
+  "wrong_extension_low_nibble",
+  "Extension path differs from the key",
+  sparseKey,
+  RLP.encode([Uint8Array.from([0x00, evenPath[1] ^ 0x01]), evenChild]),
+);
+selfRootCase(
   "extension_child_not_a_hash",
   "Expected child hash",
   sparseKey,
@@ -445,6 +451,36 @@ const longExtension = RLP.encode([Uint8Array.from([0x10, ...Array(31).fill(0)]),
 assert(longExtension.length <= 68);
 const aboveExtension = shortBranch(keccak256(longExtension), new Uint8Array(0));
 tests += `\n${shouldFail("Extension path is longer than the key")}\nunconstrained fn rejects_extension_longer_than_key() {\n let nodes: [[Field; NODE_FIELDS]; 2] = ${nodesNr([aboveExtension, longExtension])};\n let _ = verify_path(${nr(lanes(keccak256(aboveExtension)))}, ${nr(lanes(zeroKey))}, nodes, 2);\n}\n`;
+
+// A storage trie holding one slot is a single leaf. With a 31-byte value it is
+// 69 bytes, longer than any extension. Read as a branch along a key whose first
+// nibble is 1, its value item would be taken for a child hash. Choosing that
+// value as the hash of a leaf for an absent slot would then prove the absent
+// slot, so the walk must reject a long leaf.
+const minimalBytes = (n) => {
+  const h = n.toString(16);
+  return fromHex("0x" + (h.length % 2 ? "0" : "") + h);
+};
+const leafAfterOneNibble = (keyHash, value) =>
+  RLP.encode([Uint8Array.from([0x30 | (keyHash[0] & 15), ...keyHash.slice(1)]), RLP.encode(value)]);
+let absentSlot = 1n;
+while (keccak256(word(absentSlot))[0] >> 4 !== 1) absentSlot++;
+const absentKey = keccak256(word(absentSlot));
+let fakeValue = 1n;
+let fakeLeafHash;
+for (; ; fakeValue++) {
+  fakeLeafHash = keccak256(leafAfterOneNibble(absentKey, minimalBytes(fakeValue)));
+  if (fakeLeafHash[0] === 0x9f && fakeLeafHash[31] === 0x80 && fakeLeafHash[1] !== 0) break;
+}
+const singleValue = fakeLeafHash.slice(1);
+const single = new Trie({ useKeyHashing: true });
+await single.put(word(0), RLP.encode(singleValue));
+const [singleLeaf] = await single.createProof(word(0));
+assert.equal(singleLeaf.length, 69);
+assert.deepEqual(singleLeaf.slice(36), Uint8Array.from([0xa0, ...fakeLeafHash]));
+assert.equal(await single.verifyProof(single.root(), word(absentSlot), [singleLeaf]), null);
+storageTest("single_leaf_trie", single.root(), word(0), singleValue, [], { D: 1 });
+tests += `\n${shouldFail("Expected branch, not leaf")}\nunconstrained fn rejects_long_leaf_read_as_branch() {\n let nodes: [[Field; NODE_FIELDS]; 1] = ${nodesNr([singleLeaf])};\n verify_storage(${nr(lanes(single.root()))}, ${nr(arr(word(absentSlot)))}, ${valueNr(minimalBytes(fakeValue))}, nodes, 1);\n}\n`;
 
 writeFileSync("noir/ethereum_public_proofs/src/fixtures_tests.nr", tests);
 

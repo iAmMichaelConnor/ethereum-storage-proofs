@@ -388,22 +388,24 @@ and storage claims in unconstrained code with inputs packed for the AVM:
 - A storage value is two 128-bit halves.
 
 ```rust
-use ethereum_public_proofs::{NODE_FIELDS, PublicAccount, verify_account_and_storage};
+use ethereum_public_proofs::{PublicAccount, verify_account_and_storage};
+// PackedNode and node_fields are copied from the example's logic.nr (see below).
 
 #[external("public")]
 fn prove_slot(
     account: [Field; 8],
-    account_nodes: [[Field; NODE_FIELDS]; 10],
+    account_nodes: [PackedNode; 10],
     account_count: u32,
     slot_key: [u8; 32],
     value_high: u128,
     value_low: u128,
-    storage_nodes: [[Field; NODE_FIELDS]; 8],
+    storage_nodes: [PackedNode; 8],
     storage_count: u32,
 ) {
     let root = /* an authenticated state root, read from contract storage */;
-    verify_account_and_storage(root, PublicAccount::from_fields(account), account_nodes,
-        account_count, slot_key, value_high, value_low, storage_nodes, storage_count);
+    verify_account_and_storage(root, PublicAccount::from_fields(account),
+        node_fields(account_nodes), account_count, slot_key, value_high, value_low,
+        node_fields(storage_nodes), storage_count);
 }
 ```
 

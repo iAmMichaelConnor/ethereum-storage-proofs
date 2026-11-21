@@ -273,8 +273,8 @@ transaction's public functions may use at most 6,000,000.
 
 | Function | Proves | Public L2 gas |
 | --- | --- | ---: |
-| `prove_slot` | Account and slot, 10 + 8 node capacity | 4,125,032 |
-| `check_account` | Account only (the slot is proven in private), 10-node capacity | 2,171,171 |
+| `prove_slot` | Account and slot, 10 + 8 node capacity | 4,125,176 |
+| `check_account` | Account only (the slot is proven in private), 10-node capacity | 2,171,219 |
 
 Keccak-f[1600] costs 58,176 L2 gas per 136-byte block and is most of the total:
 an 8-node path of full branch nodes needs about 33 blocks. Of `prove_slot`'s total,
