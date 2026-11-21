@@ -34,20 +34,6 @@ pub(crate) unconstrained fn split3(x: Field) -> (u64, u64, u64) {
     (low as u64, (low / TWO_64) as u64, high as u64)
 }
 
-/// Lane `index` (0 to 68) of a packed node.
-#[inline_always]
-unconstrained fn lane(node: [Field; NODE_FIELDS], index: u32) -> u64 {
-    let field = node[index / 3];
-    let position = index % 3;
-    if position == 0 {
-        field as u64
-    } else if position == 1 {
-        ((field as u128) / TWO_64) as u64
-    } else {
-        ((field - (field as u128) as Field) * INV_2_128) as u64
-    }
-}
-
 /// Byte `offset` of a packed node: byte `offset % 24` of field `offset / 24`,
 /// counted from its least significant end. One radix decomposition is cheaper
 /// than extracting the lane and shifting. A field of 2^192 or more does not
@@ -59,11 +45,11 @@ unconstrained fn byte(node: [Field; NODE_FIELDS], offset: u32) -> u8 {
     bytes[23 - offset % 24]
 }
 
-/// Lane `index` of a packed node, or zero past its 69 lanes.
+/// Field `index` of a packed node, or zero past its last field.
 #[inline_always]
-unconstrained fn lane_or_zero(node: [Field; NODE_FIELDS], index: u32) -> u64 {
-    if index < 69 {
-        lane(node, index)
+unconstrained fn field_or_zero(node: [Field; NODE_FIELDS], index: u32) -> Field {
+    if index < NODE_FIELDS {
+        node[index]
     } else {
         0
     }
@@ -71,16 +57,23 @@ unconstrained fn lane_or_zero(node: [Field; NODE_FIELDS], index: u32) -> u64 {
 
 /// The 32 bytes from `offset` as four lanes; bytes past the capacity read as zero.
 unconstrained fn lanes_at(node: [Field; NODE_FIELDS], offset: u32) -> [u64; 4] {
+    // The five lanes from lane `offset / 8` lie in two or three consecutive fields.
     let first = offset / 8;
+    let field = first / 3;
+    let (a0, a1, a2) = split3(node[field]);
+    let (b0, b1, b2) = split3(field_or_zero(node, field + 1));
+    let position = first % 3;
+    let (lane0, lane1, lane2, lane3, lane4) = if position == 0 {
+        (a0, a1, a2, b0, b1)
+    } else if position == 1 {
+        (a1, a2, b0, b1, b2)
+    } else {
+        (a2, b0, b1, b2, field_or_zero(node, field + 2) as u64)
+    };
     let shift = ((offset % 8) * 8) as u64;
-    let lane0 = lane(node, first);
-    let lane1 = lane_or_zero(node, first + 1);
-    let lane2 = lane_or_zero(node, first + 2);
-    let lane3 = lane_or_zero(node, first + 3);
     if shift == 0 {
         [lane0, lane1, lane2, lane3]
     } else {
-        let lane4 = lane_or_zero(node, first + 4);
         let back = 64 - shift;
         [
             (lane0 >> shift) | (lane1 << back),
@@ -497,4 +490,24 @@ unconstrained fn full_branch_offsets_match_the_item_scan() {
             + check_full_branches(storage_nodes, storage_count),
         11,
     );
+}
+
+// Every offset, against lanes assembled byte by byte.
+#[test]
+unconstrained fn lanes_at_matches_the_bytes() {
+    let (node, _) = pattern_node(543);
+    for offset in 0..543 {
+        let mut expected = [0; 4];
+        for i in 0..32 {
+            let at = offset + i;
+            let b = if at < 543 {
+                ((at * 7 + 3) % 256) as u64
+            } else {
+                0
+            };
+            expected[i / 8] += b << ((i % 8) * 8) as u64;
+        }
+        assert_eq(lanes_at(node, offset), expected);
+        assert_eq(byte(node, offset), ((offset * 7 + 3) % 256) as u8);
+    }
 }
