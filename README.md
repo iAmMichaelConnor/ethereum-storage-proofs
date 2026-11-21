@@ -267,17 +267,20 @@ mv noir/export export
 
 L2 gas of the [`public_proofs`](examples/public_proofs) example's public functions on
 a saved mainnet proof of a USDT balance slot (7 account nodes, 7 storage nodes),
-simulated with Aztec 6.0.0's public transaction simulator on 2026-11-19. The
+simulated with Aztec 6.0.0's public transaction simulator on 2026-11-21. The
 counts are the public L2 gas; each transaction also pays a fixed 540,000. A
 transaction's public functions may use at most 6,000,000.
 
 | Function | Proves | Public L2 gas |
 | --- | --- | ---: |
-| `prove_slot` | Account and slot, 10 + 8 node capacity | 4,645,169 |
-| `check_account` | Account only (the slot is proven in private), 10-node capacity | 2,429,243 |
+| `prove_slot` | Account and slot, 10 + 8 node capacity | 4,125,032 |
+| `check_account` | Account only (the slot is proven in private), 10-node capacity | 2,171,171 |
 
 Keccak-f[1600] costs 58,176 L2 gas per 136-byte block and is most of the total:
-an 8-node path of full branch nodes needs about 33 blocks. Each node of capacity
+an 8-node path of full branch nodes needs about 33 blocks. Of `prove_slot`'s total,
+its 57 permutations are 3,316,032; decoding the arguments, reading the root and
+counting the acceptance about 206,000; the rest, about 600,000, is splitting
+fields into lanes, parsing nodes and encoding leaves. Each node of capacity
 costs about 7,300 L2 gas to decode whether used or not (about 16,000 as a plain
 `[Field; 23]` argument; the example decodes nodes with its own type). See
 [public functions](docs/proofs.md#public-functions).
