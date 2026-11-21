@@ -270,16 +270,18 @@ unconstrained fn step(
     key: [u64; 4],
     nibble: u32,
 ) -> (Reference, u32) {
-    // The list header gives the node's length.
-    let first = byte(node, 0);
+    // The list header gives the node's length. Its bytes are the low bytes of
+    // field 0 (see `byte`).
+    let head: [u8; 24] = node[0].to_be_bytes();
+    let first = head[23];
     let (start, length) = if first <= 0xf7 {
         assert(first >= 0xc0, "Node is not an RLP list");
         (1, (first - 0xc0) as u32 + 1)
     } else if first == 0xf8 {
-        (2, byte(node, 1) as u32 + 2)
+        (2, head[22] as u32 + 2)
     } else {
         assert_eq(first, 0xf9, "Node is not an RLP list");
-        (3, byte(node, 1) as u32 * 256 + byte(node, 2) as u32 + 3)
+        (3, head[22] as u32 * 256 + head[21] as u32 + 3)
     };
     assert(length < NODE_CAPACITY, "Node exceeds capacity");
     let (digest, full_branch) = hash_node(node, length);
