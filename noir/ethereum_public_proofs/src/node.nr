@@ -18,6 +18,9 @@ use std::hash::keccakf1600;
 
 /// 2^-128 in the BN254 scalar field.
 global INV_2_128: Field = 0x133100d71fdf35792b16366f4f7684df54ad7e14a329e70f18ee753c76f9dc6f;
+/// 2^64. Dividing a u128 by it, rather than shifting, lets the compiler see that
+/// the quotient fits a u64, so the cast to u64 needs no truncation.
+global TWO_64: u128 = 0x10000000000000000;
 /// Keccak-256 rate in bytes: one block, 17 lanes.
 global RATE: u32 = 136;
 /// Byte capacity of a packed node: four Keccak blocks.
@@ -28,7 +31,7 @@ pub(crate) global NODE_CAPACITY: u32 = 544;
 pub(crate) unconstrained fn split3(x: Field) -> (u64, u64, u64) {
     let low = x as u128;
     let high = (x - low as Field) * INV_2_128;
-    (low as u64, (low >> 64) as u64, high as u64)
+    (low as u64, (low / TWO_64) as u64, high as u64)
 }
 
 /// Lane `index` (0 to 68) of a packed node.
@@ -39,7 +42,7 @@ unconstrained fn lane(node: [Field; NODE_FIELDS], index: u32) -> u64 {
     if position == 0 {
         field as u64
     } else if position == 1 {
-        ((field as u128) >> 64) as u64
+        ((field as u128) / TWO_64) as u64
     } else {
         ((field - (field as u128) as Field) * INV_2_128) as u64
     }
