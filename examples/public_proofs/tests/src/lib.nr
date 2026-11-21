@@ -11,7 +11,7 @@ use aztec::{
 };
 use fixture::{
     ACCOUNT, ACCOUNT_COUNT, account_nodes, BLOCK_NUMBER, raw_storage_nodes, SLOT_KEY, STATE_ROOT, STORAGE_COUNT,
-    STORAGE_ROOT, storage_nodes, VALUE, VALUE_HIGH, VALUE_LENGTH, VALUE_LOW,
+    storage_nodes, STORAGE_ROOT, VALUE, VALUE_HIGH, VALUE_LENGTH, VALUE_LOW,
 };
 use public_proofs_contract::{
     prove_account_in_public, prove_slot_in_public, prove_storage_in_private, PublicProofs, StateRoot, trusted_root,
@@ -68,8 +68,21 @@ unconstrained fn wrong_value_rejected_in_public() {
 // them. The private part runs unconstrained here; its constraints are those of `ethereum_proofs`.
 #[test]
 unconstrained fn slot_proven_privately_and_account_in_public() {
-    prove_storage_in_private(STORAGE_ROOT, SLOT_KEY, VALUE, VALUE_LENGTH, raw_storage_nodes(), STORAGE_COUNT);
-    prove_account_in_public(STATE_ROOT, ACCOUNT, account_nodes(), ACCOUNT_COUNT, STORAGE_ROOT);
+    prove_storage_in_private(
+        STORAGE_ROOT,
+        SLOT_KEY,
+        VALUE,
+        VALUE_LENGTH,
+        raw_storage_nodes(),
+        STORAGE_COUNT,
+    );
+    prove_account_in_public(
+        STATE_ROOT,
+        ACCOUNT,
+        account_nodes(),
+        ACCOUNT_COUNT,
+        STORAGE_ROOT,
+    );
 }
 
 #[test(should_fail_with = "Account has a different storage root")]
