@@ -3,8 +3,8 @@ use aztec::macros::aztec;
 mod logic;
 pub use ethereum_public_proofs::NODE_FIELDS;
 pub use logic::{
-    ACCOUNT_DEPTH, count_acceptance, NODE_BYTES, PRIVATE_STORAGE_DEPTH, ProofNode, prove_account_in_public,
-    prove_slot_in_public, prove_storage_in_private, STORAGE_DEPTH, StateRoot, trusted_root,
+    ACCOUNT_DEPTH, count_acceptance, NODE_BYTES, node_fields, PackedNode, PRIVATE_STORAGE_DEPTH, ProofNode,
+    prove_account_in_public, prove_slot_in_public, prove_storage_in_private, StateRoot, STORAGE_DEPTH, trusted_root,
 };
 
 /// Proves an Ethereum storage slot under a recorded state root, in two ways:
@@ -21,15 +21,14 @@ pub use logic::{
 #[aztec]
 pub contract PublicProofs {
     use crate::{
-        ACCOUNT_DEPTH, count_acceptance, PRIVATE_STORAGE_DEPTH, ProofNode, prove_account_in_public,
-        prove_slot_in_public, prove_storage_in_private, STORAGE_DEPTH, StateRoot, trusted_root,
+        ACCOUNT_DEPTH, count_acceptance, node_fields, PackedNode, PRIVATE_STORAGE_DEPTH, ProofNode,
+        prove_account_in_public, prove_slot_in_public, prove_storage_in_private, StateRoot, STORAGE_DEPTH, trusted_root,
     };
     use aztec::{
         macros::{functions::{external, initializer, only_self}, storage::storage},
         protocol::address::AztecAddress,
         state_vars::{Map, PublicImmutable, PublicMutable},
     };
-    use ethereum_public_proofs::NODE_FIELDS;
 
     #[storage]
     struct Storage<Context> {
@@ -54,24 +53,24 @@ pub contract PublicProofs {
     fn prove_slot(
         block_number: Field,
         account: [Field; 8],
-        account_nodes: [[Field; NODE_FIELDS]; ACCOUNT_DEPTH],
+        account_nodes: [PackedNode; ACCOUNT_DEPTH],
         account_count: u32,
         slot_key: [u8; 32],
         value_high: u128,
         value_low: u128,
-        storage_nodes: [[Field; NODE_FIELDS]; STORAGE_DEPTH],
+        storage_nodes: [PackedNode; STORAGE_DEPTH],
         storage_count: u32,
     ) {
         let root = trusted_root(self.storage.roots, block_number);
         prove_slot_in_public(
             root,
             account,
-            account_nodes,
+            node_fields(account_nodes),
             account_count,
             slot_key,
             value_high,
             value_low,
-            storage_nodes,
+            node_fields(storage_nodes),
             storage_count,
         );
         count_acceptance(self.storage.accepted);
@@ -81,7 +80,7 @@ pub contract PublicProofs {
     fn prove_slot_privately(
         block_number: Field,
         account: [Field; 8],
-        account_nodes: [[Field; NODE_FIELDS]; ACCOUNT_DEPTH],
+        account_nodes: [PackedNode; ACCOUNT_DEPTH],
         account_count: u32,
         storage_root: [u64; 4],
         slot_key: [u8; 32],
@@ -90,7 +89,14 @@ pub contract PublicProofs {
         storage_nodes: [ProofNode; PRIVATE_STORAGE_DEPTH],
         storage_count: u32,
     ) {
-        prove_storage_in_private(storage_root, slot_key, value, value_length, storage_nodes, storage_count);
+        prove_storage_in_private(
+            storage_root,
+            slot_key,
+            value,
+            value_length,
+            storage_nodes,
+            storage_count,
+        );
         // The account proof binds `storage_root` to the account under the recorded state root.
         self.enqueue_self.check_account(block_number, account, account_nodes, account_count, storage_root);
     }
@@ -100,12 +106,18 @@ pub contract PublicProofs {
     fn check_account(
         block_number: Field,
         account: [Field; 8],
-        account_nodes: [[Field; NODE_FIELDS]; ACCOUNT_DEPTH],
+        account_nodes: [PackedNode; ACCOUNT_DEPTH],
         account_count: u32,
         storage_root: [u64; 4],
     ) {
         let root = trusted_root(self.storage.roots, block_number);
-        prove_account_in_public(root, account, account_nodes, account_count, storage_root);
+        prove_account_in_public(
+            root,
+            account,
+            node_fields(account_nodes),
+            account_count,
+            storage_root,
+        );
         count_acceptance(self.storage.accepted);
     }
 

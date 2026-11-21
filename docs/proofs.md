@@ -414,6 +414,13 @@ needs an `unsafe` block and proves nothing. `verify_path` with
 `verify_account_leaf` or `verify_storage_leaf` composes a path with its leaf;
 the path end carries the key it walked, and the leaf checks reject another.
 
+aztec-nr decodes a `[Field; N]` argument in a loop that costs about 700 L2 gas
+per field, about 16,000 per node. The example contract instead takes each node
+as a `PackedNode { fields }` whose `Deserialize` reads the fields straight into
+an array, about 7,300 per node, and passes `node_fields(nodes)` on; copy it from
+[`logic.nr`](../examples/public_proofs/contract/src/logic.nr). A caller then
+passes each node as `{ fields }`, e.g. `accountNodes.map((fields) => ({ fields }))`.
+
 Public-function arguments are public. A slot proven in public reveals the
 contract, the slot and its value. To keep the slot and value private, prove the
 storage path in a private function with `ethereum_proofs`, and enqueue a public

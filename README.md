@@ -277,9 +277,10 @@ transaction's public functions may use at most 6,000,000.
 | `check_account` | Account only (the slot is proven in private), 10-node capacity | 2,429,243 |
 
 Keccak-f[1600] costs 58,176 L2 gas per 136-byte block and is most of the total:
-an 8-node path of full branch nodes needs about 33 blocks. Every argument field
-costs about 700 L2 gas to decode, so each node of capacity costs about 16,000
-whether used or not. See [public functions](docs/proofs.md#public-functions).
+an 8-node path of full branch nodes needs about 33 blocks. Each node of capacity
+costs about 7,300 L2 gas to decode whether used or not (about 16,000 as a plain
+`[Field; 23]` argument; the example decodes nodes with its own type). See
+[public functions](docs/proofs.md#public-functions).
 
 ## Security
 

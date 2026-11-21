@@ -1,7 +1,7 @@
 //! The logic of PublicProofs' functions, callable from TXE test contexts.
 use aztec::{
     context::PublicContext,
-    protocol::traits::{Deserialize, Packable, Serialize},
+    protocol::{traits::{Deserialize, Packable, Serialize}, utils::reader::Reader},
     state_vars::{Map, PublicMutable},
 };
 use ethereum_proofs::{proof::EncodedNode, types::StorageSlot, verify_storage_proof};
@@ -17,6 +17,42 @@ pub global NODE_BYTES: u32 = 532;
 #[derive(Deserialize, Packable, Serialize)]
 pub struct StateRoot {
     pub lanes: [u64; 4],
+}
+
+/// One packed trie node as a public-function argument: its `NODE_FIELDS` fields (`ethereum_public_proofs` layout).
+/// aztec-nr decodes a `[Field; N]` argument in a loop that costs about 700 L2 gas per field; this type reads its
+/// fields straight into an array literal, for less than half of that.
+#[derive(Serialize)]
+pub struct PackedNode {
+    pub fields: [Field; NODE_FIELDS],
+}
+
+impl Deserialize for PackedNode {
+    let N: u32 = NODE_FIELDS;
+
+    fn deserialize(fields: [Field; Self::N]) -> Self {
+        PackedNode { fields }
+    }
+
+    #[inline_always]
+    fn stream_deserialize<let K: u32>(reader: &mut Reader<K>) -> Self {
+        PackedNode { fields: read_node_fields!() }
+    }
+}
+
+/// `[reader.read(), reader.read(), ...]`, one read per node field, in order.
+comptime fn read_node_fields() -> Quoted {
+    let mut reads: [Quoted] = @[];
+    for _ in 0..NODE_FIELDS {
+        reads = reads.push_back(quote { reader.read() });
+    }
+    let reads = reads.join(quote { , });
+    quote { [$reads] }
+}
+
+/// The fields of packed node arguments.
+pub fn node_fields<let D: u32>(nodes: [PackedNode; D]) -> [[Field; NODE_FIELDS]; D] {
+    nodes.map(|node: PackedNode| node.fields)
 }
 
 /// One raw trie node for the private storage proof (`ethereum_proofs::proof::EncodedNode`, which has no
@@ -72,8 +108,16 @@ pub fn prove_storage_in_private(
     storage_nodes: [ProofNode; PRIVATE_STORAGE_DEPTH],
     storage_count: u32,
 ) {
-    let nodes = storage_nodes.map(|n: ProofNode| EncodedNode { bytes: n.bytes, length: n.length, is_extension: n.is_extension });
-    verify_storage_proof(storage_root, slot_key, StorageSlot { value, value_length }, nodes, storage_count);
+    let nodes = storage_nodes.map(|n: ProofNode| {
+        EncodedNode { bytes: n.bytes, length: n.length, is_extension: n.is_extension }
+    });
+    verify_storage_proof(
+        storage_root,
+        slot_key,
+        StorageSlot { value, value_length },
+        nodes,
+        storage_count,
+    );
 }
 
 /// The body of `check_account`: the account, with `storage_root`, is under `root`.
