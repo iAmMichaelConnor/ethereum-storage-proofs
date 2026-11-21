@@ -91,14 +91,14 @@ unconstrained fn lanes_at(node: [Field; NODE_FIELDS], offset: u32) -> [u64; 4] {
     }
 }
 
+/// The 17 lanes of one Keccak block.
+type Lanes17 = (u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64);
+
 /// The 17 lanes of block `block` (0 to 3), which starts at lane 17 * block:
 /// field 0 position 0, field 5 position 2, field 11 position 1 or field 17
 /// position 0.
 #[inline_always]
-unconstrained fn block_lanes(
-    node: [Field; NODE_FIELDS],
-    block: u32,
-) -> (u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64, u64) {
+unconstrained fn block_lanes(node: [Field; NODE_FIELDS], block: u32) -> Lanes17 {
     if block == 0 {
         let (l0, l1, l2) = split3(node[0]);
         let (l3, l4, l5) = split3(node[1]);
@@ -135,10 +135,9 @@ unconstrained fn block_lanes(
     }
 }
 
-/// XOR block `block` of a packed node into the sponge state.
+/// XOR a block's lanes into the sponge state.
 #[inline_always]
-unconstrained fn absorb(state: [u64; 25], node: [Field; NODE_FIELDS], block: u32) -> [u64; 25] {
-    let l = block_lanes(node, block);
+unconstrained fn absorb(state: [u64; 25], l: Lanes17) -> [u64; 25] {
     [
         state[0] ^ l.0,
         state[1] ^ l.1,
@@ -170,38 +169,72 @@ unconstrained fn absorb(state: [u64; 25], node: [Field; NODE_FIELDS], block: u32
 
 /// The first block into an empty sponge.
 #[inline_always]
-unconstrained fn first_block(node: [Field; NODE_FIELDS]) -> [u64; 25] {
-    let l = block_lanes(node, 0);
+unconstrained fn first_block(l: Lanes17) -> [u64; 25] {
     [
         l.0, l.1, l.2, l.3, l.4, l.5, l.6, l.7, l.8, l.9, l.10, l.11, l.12, l.13, l.14, l.15, l.16,
         0, 0, 0, 0, 0, 0, 0, 0,
     ]
 }
 
-/// Keccak-256 of the first `length` bytes of a packed node. Bytes from
-/// `length` to the end of its last block must be zero (any other value changes
-/// the digest, so a nonzero tail only makes the node fail to match).
-unconstrained fn hash_node(node: [Field; NODE_FIELDS], length: u32) -> [u64; 4] {
+/// Whether a node's four blocks of lanes have the layout of a branch whose 16
+/// children are all hashes and whose value is empty, the commonest node: the
+/// header f9 02 11 (a 529-byte list, 532 bytes in all), 0xa0 at byte 3 + 33j for
+/// each child j, and 0x80 at byte 531. Each of these is the prefix a scan of
+/// the items would read at that offset, so together they fix the parse: child
+/// j is the 32-byte hash at byte 4 + 33j, and the value item ends the node.
+#[inline_always]
+unconstrained fn is_full_branch(b0: Lanes17, b1: Lanes17, b2: Lanes17, b3: Lanes17) -> bool {
+    // Byte k of a lane is bits 8k to 8k + 7. Block b holds lanes 17b to 17b + 16.
+    ((b0.0 & 0xffffffff) == 0xa01102f9) // bytes 0 to 3
+        & ((b0.4 & 0xff00000000) == 0xa000000000) // byte 36
+        & ((b0.8 & 0xff0000000000) == 0xa00000000000) // byte 69
+        & ((b0.12 & 0xff000000000000) == 0xa0000000000000) // byte 102
+        & ((b0.16 & 0xff00000000000000) == 0xa000000000000000) // byte 135
+        & ((b1.4 & 0xff) == 0xa0) // byte 168
+        & ((b1.8 & 0xff00) == 0xa000) // byte 201
+        & ((b1.12 & 0xff0000) == 0xa00000) // byte 234
+        & ((b1.16 & 0xff000000) == 0xa0000000) // byte 267
+        & ((b2.3 & 0xff00000000) == 0xa000000000) // byte 300
+        & ((b2.7 & 0xff0000000000) == 0xa00000000000) // byte 333
+        & ((b2.11 & 0xff000000000000) == 0xa0000000000000) // byte 366
+        & ((b2.15 & 0xff00000000000000) == 0xa000000000000000) // byte 399
+        & ((b3.3 & 0xff) == 0xa0) // byte 432
+        & ((b3.7 & 0xff00) == 0xa000) // byte 465
+        & ((b3.11 & 0xff0000) == 0xa00000) // byte 498
+        & ((b3.15 & 0xff000000) == 0x80000000) // byte 531
+}
+
+/// Keccak-256 of the first `length` bytes of a packed node, and whether the node
+/// has the layout `is_full_branch` checks. Bytes from `length` to the end of its
+/// last block must be zero (any other value changes the digest, so a nonzero
+/// tail only makes the node fail to match).
+unconstrained fn hash_node(node: [Field; NODE_FIELDS], length: u32) -> ([u64; 4], bool) {
     let full = length / RATE;
     let rest = length % RATE;
     // The message and its padding fill blocks 0 to `full` (at most 3, as
     // `length` is below four blocks). Each is absorbed from the node, whose
     // bytes from `length` on are zero; unrolled, every block's lane positions
     // are constants.
-    let mut state = first_block(node);
+    let b0 = block_lanes(node, 0);
+    let mut state = first_block(b0);
+    let mut full_branch = false;
     if full > 0 {
-        state = absorb(keccakf1600(state), node, 1);
-    }
-    if full > 1 {
-        state = absorb(keccakf1600(state), node, 2);
-    }
-    if full > 2 {
-        state = absorb(keccakf1600(state), node, 3);
+        let b1 = block_lanes(node, 1);
+        state = absorb(keccakf1600(state), b1);
+        if full > 1 {
+            let b2 = block_lanes(node, 2);
+            state = absorb(keccakf1600(state), b2);
+            if full > 2 {
+                let b3 = block_lanes(node, 3);
+                state = absorb(keccakf1600(state), b3);
+                full_branch = is_full_branch(b0, b1, b2, b3);
+            }
+        }
     }
     state[rest / 8] ^= 1 << ((rest % 8) * 8) as u64;
     state[16] ^= 0x80 << 56;
     state = keccakf1600(state);
-    [state[0], state[1], state[2], state[3]]
+    ([state[0], state[1], state[2], state[3]], full_branch)
 }
 
 /// Total length (header included) of the short RLP item with this prefix.
@@ -249,17 +282,19 @@ unconstrained fn step(
         (3, byte(node, 1) as u32 * 256 + byte(node, 2) as u32 + 3)
     };
     assert(length < NODE_CAPACITY, "Node exceeds capacity");
-    assert_eq(hash_node(node, length), parent, "Node hash differs from its parent reference");
+    let (digest, full_branch) = hash_node(node, length);
+    assert_eq(digest, parent, "Node hash differs from its parent reference");
 
     let selected = nibble_at(key, nibble) as u32;
-    if length > 68 {
+    if full_branch {
+        // The hashed node's child prefixes and empty value were read by
+        // `is_full_branch`: the selected child is the hash after its 0xa0.
+        (Reference { lanes: lanes_at(node, 4 + 33 * selected), length: 32 }, nibble + 1)
+    } else if length > 68 {
         // An extension is at most 68 bytes (a 33-byte path item and a 33-byte
         // child), so this is a branch. The bytes are the hashed node's, so only
         // the items up to the selected child need reading.
-        let mut offset = start;
-        for _ in 0..selected {
-            offset += item_length(byte(node, offset));
-        }
+        let offset = skip_items(node, start, selected);
         // Defence in depth: a node that hashes to its parent's reference is a
         // well-formed branch, whose selected child always starts before its end.
         assert(offset < length, "Node items do not end at its length");
@@ -268,6 +303,15 @@ unconstrained fn step(
     } else {
         short_node(node, start, length, key, nibble, selected)
     }
+}
+
+/// The offset of the item `count` items after the one at `offset`.
+#[inline_always]
+unconstrained fn skip_items(node: [Field; NODE_FIELDS], mut offset: u32, count: u32) -> u32 {
+    for _ in 0..count {
+        offset += item_length(byte(node, offset));
+    }
+    offset
 }
 
 /// The reference held by the branch child whose item starts at `offset`.
@@ -402,7 +446,7 @@ unconstrained fn pattern_node(length: u32) -> ([Field; NODE_FIELDS], [u64; 4]) {
 unconstrained fn hash_node_matches_sponge_at_block_boundaries() {
     for length in [2, 135, 136, 137, 271, 272, 273, 407, 408, 409, 543] {
         let (node, digest) = pattern_node(length);
-        assert_eq(hash_node(node, length), digest);
+        assert_eq(hash_node(node, length).0, digest);
     }
 }
 
@@ -412,5 +456,43 @@ unconstrained fn hash_node_reads_the_padding_block() {
     let (mut node, digest) = pattern_node(136);
     // Byte 136 is the low byte of lane 17: field 5, bits 128 to 135.
     node[5] += 0x100000000000000000000000000000000;
-    assert(hash_node(node, 136) != digest);
+    assert(hash_node(node, 136).0 != digest);
+}
+
+/// The number of full branches among the first `count` nodes, checking that
+/// for each the layout check gives every child the offset an item scan gives.
+unconstrained fn check_full_branches<let D: u32>(
+    nodes: [[Field; NODE_FIELDS]; D],
+    count: u32,
+) -> u32 {
+    let mut full_branches = 0;
+    for i in 0..count {
+        let node = nodes[i];
+        if byte(node, 0) == 0xf9 {
+            let length = byte(node, 1) as u32 * 256 + byte(node, 2) as u32 + 3;
+            let (_, full_branch) = hash_node(node, length);
+            assert_eq(full_branch, length == 532);
+            if full_branch {
+                full_branches += 1;
+                assert_eq(skip_items(node, 3, 17), length);
+                for child in 0..16 {
+                    let offset = skip_items(node, 3, child);
+                    assert_eq(offset, 3 + 33 * child);
+                    assert_eq(branch_child(node, offset).lanes, lanes_at(node, 4 + 33 * child));
+                }
+            }
+        }
+    }
+    full_branches
+}
+
+#[test]
+unconstrained fn full_branch_offsets_match_the_item_scan() {
+    let (_, _, account_nodes, account_count, _, _, _, storage_nodes, storage_count) =
+        crate::fixtures_tests::mainnet();
+    assert_eq(
+        check_full_branches(account_nodes, account_count)
+            + check_full_branches(storage_nodes, storage_count),
+        11,
+    );
 }
