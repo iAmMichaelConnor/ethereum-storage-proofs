@@ -15,8 +15,11 @@ Preconditions of each entry point are in the
 ethereum_proofs = { git = "https://github.com/iAmMichaelConnor/ethereum-storage-proofs", tag = "v0.1.0", directory = "noir/ethereum_proofs" }
 ethereum_recursive_proofs = { git = "https://github.com/iAmMichaelConnor/ethereum-storage-proofs", tag = "v0.1.0", directory = "noir/ethereum_recursive_proofs" }
 ethereum_ssz = { git = "https://github.com/iAmMichaelConnor/ethereum-storage-proofs", tag = "v0.1.0", directory = "noir/ethereum_ssz" }
-ethereum_public_proofs = { git = "https://github.com/iAmMichaelConnor/ethereum-storage-proofs", tag = "v0.1.0", directory = "noir/ethereum_public_proofs" }
 ```
+
+For `ethereum_public_proofs`, use a checkout that includes the package and add it
+as a path dependency relative to your `Nargo.toml`. See the
+[example contract manifest](../examples/public_proofs/contract/Nargo.toml).
 
 | Package | Public surface | Dependencies |
 | --- | --- | --- |
@@ -378,10 +381,13 @@ verifiers above work there but are far too expensive: their byte arrays cost
 hundreds of L2 gas per byte. `ethereum_public_proofs` verifies the same account
 and storage claims in unconstrained code with inputs packed for the AVM:
 
-- A node is its RLP bytes, unchanged, as little-endian 64-bit Keccak lanes,
-  three per field: 23 fields hold up to 543 bytes. The verifier absorbs each
-  136-byte block with the AVM's Keccak-f[1600] opcode, compares the digest with
-  the parent's reference, and only then reads the child it descends into.
+- The node array holds the internal path in root-to-leaf order. The verifier
+  reconstructs the terminal leaf from the claim. Each internal node's raw RLP
+  bytes are zero-padded and packed into 23 fields, three little-endian 64-bit
+  Keccak lanes per field, with up to 543 RLP bytes per node. The verifier absorbs
+  each 136-byte block with the AVM's Keccak-f[1600] opcode, checks the node hash
+  against its expected reference, and then reads the selected child. `count`
+  selects the used prefix of the array.
 - An account is eight fields of integers (`PublicAccount::from_fields`): address,
   nonce, the balance as two 128-bit halves, and the storage and code hashes. The
   leaf is encoded from these integers, so it is canonical by construction.
@@ -403,47 +409,55 @@ fn prove_slot(
     storage_count: u32,
 ) {
     let root = /* an authenticated state root, read from contract storage */;
+    // Bind the caller-supplied account address and slot to your application policy.
     verify_account_and_storage(root, PublicAccount::from_fields(account),
         node_fields(account_nodes), account_count, slot_key, value_high, value_low,
         node_fields(storage_nodes), storage_count);
 }
 ```
 
-The SDK's `preparePublicAccount` and `preparePublicStorage` produce these
-arguments from `eth_getProof`, and `pack::pack_node` converts an `EncodedNode`
-in Noir. Every entry point is an `unconstrained fn`: calling one from a circuit
-needs an `unsafe` block and proves nothing. `verify_path` with
-`verify_account_leaf` or `verify_storage_leaf` composes a path with its leaf;
-the path end carries the key it walked, and the leaf checks reject another.
+The SDK's [public input helpers](../packages/ethereum-storage-proofs/README.md#aztec-public-functions)
+prepare these arguments from `eth_getProof`. In Noir, `pack::pack_node` converts
+an `EncodedNode`. `verify_account` checks an account under a state root and
+`verify_storage` checks a nonzero slot under a storage root. Use
+`verify_account_and_storage` to bind both claims to the same state root. For
+separate path and leaf checks, obtain the `PathEnd` from `verify_path` under your
+authenticated root in the same execution, then pass it to `verify_account_leaf`
+or `verify_storage_leaf`. The path end binds the walked key. These entry points
+run in unconstrained code. Use `ethereum_proofs` for checks enforced by a Noir
+circuit or an Aztec private function.
 
 aztec-nr decodes a `[Field; N]` argument in a loop that costs about 700 L2 gas
 per field, about 16,000 per node. The example contract instead takes each node
 as a `PackedNode { fields }` whose `Deserialize` reads the fields straight into
 an array, about 7,300 per node, and passes `node_fields(nodes)` on; copy it from
-[`logic.nr`](../examples/public_proofs/contract/src/logic.nr). A caller then
-passes each node as `{ fields }`, e.g. `accountNodes.map((fields) => ({ fields }))`.
+[`logic.nr`](../examples/public_proofs/contract/src/logic.nr). With the SDK's
+decimal field strings, pass each node as `{ fields: fields.map(BigInt) }` to the
+generated TypeScript contract client.
 
 Public-function arguments are public. A slot proven in public reveals the
 contract, the slot and its value. To keep the slot and value private, prove the
 storage path in a private function with `ethereum_proofs`, and enqueue a public
 call that proves the account with the same storage root, as the
-[`public_proofs`](../examples/public_proofs) example does: the contract, its
-storage root and the block are then public, the slot and value are not. A public
-function can also read the state root from contract storage, so roots can be
-recorded as they arrive instead of fixed at deployment; who may record them is
-the application's trust assumption.
+[`public_proofs`](../examples/public_proofs) example does. The block, account
+fields (including its storage root) and account path are public in this flow.
+The slot, value and storage path stay private. A public function can read the
+state root from contract storage. The application decides which roots to record
+and who can record them.
 
-The costs are in the [README benchmarks](../README.md#public-functions). Size the
-node capacities to the paths you accept: each unused node slot still costs its
-argument decoding. The package proves inclusion of nonzero values only; absence,
-receipts and events have no public form. An embedded (shorter than 32 bytes)
-leaf is supported; an embedded branch or extension is rejected, which needs two
-keys sharing about 56 nibbles of their Keccak hashes.
+The costs are in the [README benchmarks](../README.md#public-functions). Match
+the SDK depth options to the contract's capacities. Each unused node slot still
+costs gas to decode. Use roots of canonical Ethereum secure tries. The verifier
+authenticates each visited node and follows the selected child, relying on
+Ethereum's canonical trie structure. It supports account and nonzero storage
+inclusion, including embedded terminal leaves shorter than 32 bytes. It rejects
+embedded internal branches and extensions. Use the circuit APIs for absence,
+receipts and events.
 
 ## Consumer obligations
 
 A successful verification proves a fact about inputs the application supplies.
-These duties apply to every route, direct or recursive.
+These duties apply to direct circuit, recursive and public-function verification.
 
 ### Authenticated inputs
 

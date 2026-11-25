@@ -11,10 +11,10 @@
 //! with no byte array built. Hashes, roots and hashed keys are four
 //! little-endian lanes, as in `ethereum_proofs`.
 //!
-//! The roots, the address and the slot are the caller's to authenticate and bind,
-//! exactly as for `ethereum_proofs`. Public-function arguments are public, so
-//! everything passed here (the root, the account, the slot and its value) is
-//! visible on Aztec.
+//! The caller must authenticate a root of a canonical Ethereum secure trie and
+//! bind the intended address and slot. The walk supports hashed internal nodes
+//! and hashed or embedded terminal leaves. Any values passed as public-function
+//! arguments are visible on Aztec.
 
 mod sink;
 mod node;

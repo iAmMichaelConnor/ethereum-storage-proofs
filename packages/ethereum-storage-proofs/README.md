@@ -3,11 +3,12 @@
 # ethereum-storage-proofs
 
 Host side of the Noir libraries in this repository: it validates raw Ethereum
-proofs, chooses capacities, prepares witnesses, generates producer circuits and
-drives the pinned compiler and backend. Install and a minimal example are in the
-[repository README](../../README.md#typescript-sdk); [index.d.ts](index.d.ts) is the
-complete typed API. Host checks do not authenticate the chain, finality or a root
-the application chose, and proving and key generation run only on explicit calls.
+proofs, prepares circuit witnesses and Aztec public function arguments,
+generates producer circuits and drives the pinned compiler and backend. See the
+[repository README](../../README.md#typescript-sdk) for installation and
+[index.d.ts](index.d.ts) for the complete typed API. Host checks do not authenticate
+the chain, finality or a root the application chose. Proving and key generation
+run only on explicit calls.
 
 ## Requirements
 
@@ -70,6 +71,8 @@ uint256 `bigint`.
 | --- | --- |
 | `fetchProof` | Exact-block, multi-slot RPC fetch with local trie validation |
 | `prepare`, `prepareAccount`, `prepareStorage` | Validate paths and build single-path witnesses |
+| `preparePublicAccount`, `preparePublicStorage` | Validate inclusion paths and prepare packed Aztec public function arguments |
+| `packPublicNode`, `packPublicAccount` | Pack one RLP node or an account witness into `PUBLIC_NODE_FIELDS` (23) or `PUBLIC_ACCOUNT_FIELDS` (8) decimal field strings |
 | `prepareBatchStorage`, `prepareMixedBatch` | Deduplicate shared nodes; uniform or mixed batch witnesses |
 | `encodeRpcReceipt`, `decodeReceipt`, `buildReceiptProof` | Consensus receipt encoding and receipt-trie reconstruction |
 | `inspectReceiptProof`, `prepareReceipt`, `prepareEvent` | Verify receipt proofs and build receipt and event witnesses |
@@ -81,6 +84,45 @@ uint256 `bigint`.
 | `proveRecursiveProof` | Prove and natively verify a producer proof; optionally its recursive consumer too |
 | `proveLinkedRecursiveProofs` | Prove and verify the composition of an app proof and a user proof |
 | `checkRecursiveProofExport` | JSON shape and canonical encodings only |
+
+## Aztec public functions
+
+Given an EIP-1186 envelope `input` for one block, prepare account and nonzero
+storage inclusion arguments for the [example contract](../../examples/public_proofs).
+
+```ts
+import { preparePublicAccount, preparePublicStorage } from "ethereum-storage-proofs";
+
+const account = await preparePublicAccount(input, { accountDepth: 10 });
+const storage = await preparePublicStorage(input, { storageDepth: 8 });
+const args = [
+  blockNumber,
+  account.account.map(BigInt),
+  account.accountNodes.map((fields) => ({ fields: fields.map(BigInt) })),
+  account.accountCount,
+  storage.slotKey,
+  BigInt(storage.valueHigh),
+  BigInt(storage.valueLow),
+  storage.storageNodes.map((fields) => ({ fields: fields.map(BigInt) })),
+  storage.storageCount,
+] as const;
+// Pass ...args to the example contract's prove_slot method.
+```
+
+The depths shown are the defaults. Set them to the contract's node array
+capacities. The counts say how many nodes are used before padding. Pass zero-based
+`slotIndex` to `preparePublicStorage` when the RPC response contains several
+storage proofs. `valueHigh` and `valueLow` are the two 128-bit halves of the value.
+The preparation helpers return field elements as decimal strings. The generated
+Aztec client accepts `bigint`, as in the example. The contract looks up its
+recorded state root by block number. Its admin can record the authenticated root
+using `{ lanes: account.stateRoot.map(BigInt) }` as the `set_root` root argument.
+
+The public verifier supports embedded terminal leaves and rejects embedded
+internal nodes. The preparation helpers reject unsupported internal nodes, even
+if the proof is valid for the constrained verifier. See the
+[public functions guide](../../docs/proofs.md#public-functions) for the Noir ABI
+and the flow that keeps the slot and value private.
 
 ## Choosing capacities
 
