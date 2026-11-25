@@ -2,6 +2,7 @@
 // The layouts are those of noir/ethereum_public_proofs/src/node.nr and leaf.nr.
 // Field elements are returned as decimal strings. Root authenticity is the caller's responsibility.
 import assert from "node:assert/strict";
+import { prepareBatchStorage } from "./batch.mjs";
 import { prepareAccount, prepareStorage } from "./prepare.mjs";
 
 export const PUBLIC_NODE_FIELDS = 23;
@@ -71,15 +72,31 @@ export function packPublicAccount(account) {
   ].map(String);
 }
 
-function packPath(nodes, count, depth) {
-  const packed = nodes.slice(0, count).map(({ bytes, length }, index) => {
-    // The trie root is always hashed. Short internal descendants are embedded.
-    assert(index === 0 || length >= 32, "Embedded internal nodes are not supported");
-    return packPublicNode(bytes.slice(0, length));
-  });
-  return packed.concat(
-    Array.from({ length: depth - count }, () => Array(PUBLIC_NODE_FIELDS).fill("0")),
+function assertPublicInternalNode(length, depth) {
+  // The trie root is always hashed. Short internal descendants are embedded.
+  assert(depth === 0 || length >= 32, "Embedded internal nodes are not supported");
+}
+
+function packNodes(nodes, count, capacity) {
+  const packed = nodes.slice(0, count).map(({ bytes, length }) =>
+    packPublicNode(bytes.slice(0, length)),
   );
+  return packed.concat(
+    Array.from({ length: capacity - count }, () => Array(PUBLIC_NODE_FIELDS).fill("0")),
+  );
+}
+
+function packPath(nodes, count, depth) {
+  for (let i = 0; i < count; i++) assertPublicInternalNode(nodes[i].length, i);
+  return packNodes(nodes, count, depth);
+}
+
+function valueHalves({ value, value_length }) {
+  const word = integer(value, value_length);
+  return {
+    valueHigh: (word >> 128n).toString(),
+    valueLow: (word & ((1n << 128n) - 1n)).toString(),
+  };
 }
 
 /**
@@ -102,13 +119,51 @@ export async function preparePublicStorage(
   { storageDepth = 8, slotIndex } = {},
 ) {
   const w = await prepareStorage(input, { storageDepth, storageBytes: 532, slotIndex });
-  const value = integer(w.value.value, w.value.value_length);
   return {
     storageRoot: w.storage_root,
     slotKey: w.slot_key,
-    valueHigh: (value >> 128n).toString(),
-    valueLow: (value & ((1n << 128n) - 1n)).toString(),
+    ...valueHalves(w.value),
     storageNodes: packPath(w.storage_nodes, w.storage_count, storageDepth),
     storageCount: w.storage_count,
+  };
+}
+
+/** Prepare the ordered nonzero storage proofs of one EIP-1186 response. */
+export async function preparePublicStorageBatch(
+  input,
+  { slotCapacity = 2, nodeCapacity = 15, pathDepth = 8 } = {},
+) {
+  assert(Number.isSafeInteger(slotCapacity) && slotCapacity > 0, "Invalid slotCapacity");
+  const entries = input.proof?.storageProof;
+  assert(Array.isArray(entries) && entries.length > 0, "Expected nonempty storageProof");
+  const proofCount = entries.length;
+  assert(proofCount <= slotCapacity, `Slot capacity ${slotCapacity} exceeded`);
+  const witness = await prepareBatchStorage(input, { nodeCapacity, pathDepth });
+  const proofs = witness.paths.map(({ indices, count }, i) => {
+    for (let j = 0; j < count; j++) {
+      assertPublicInternalNode(witness.nodes[indices[j]].length, j);
+    }
+    return {
+      slotKey: witness.slot_keys[i],
+      ...valueHalves(witness.values[i]),
+      nodeIndices: indices,
+      count,
+    };
+  });
+  while (proofs.length < slotCapacity) {
+    proofs.push({
+      slotKey: Array(32).fill(0),
+      valueHigh: "0",
+      valueLow: "0",
+      nodeIndices: Array(pathDepth).fill(0),
+      count: 0,
+    });
+  }
+  return {
+    storageRoot: witness.root,
+    storageNodes: packNodes(witness.nodes, witness.node_count, nodeCapacity),
+    nodeCount: witness.node_count,
+    proofs,
+    proofCount,
   };
 }

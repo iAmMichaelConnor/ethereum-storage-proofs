@@ -72,6 +72,7 @@ uint256 `bigint`.
 | `fetchProof` | Exact-block, multi-slot RPC fetch with local trie validation |
 | `prepare`, `prepareAccount`, `prepareStorage` | Validate paths and build single-path witnesses |
 | `preparePublicAccount`, `preparePublicStorage` | Validate inclusion paths and prepare packed Aztec public function arguments |
+| `preparePublicStorageBatch` | Prepare ordered slot claims and a shared packed node table for one storage root |
 | `packPublicNode`, `packPublicAccount` | Pack one RLP node or an account witness into `PUBLIC_NODE_FIELDS` (23) or `PUBLIC_ACCOUNT_FIELDS` (8) decimal field strings |
 | `prepareBatchStorage`, `prepareMixedBatch` | Deduplicate shared nodes; uniform or mixed batch witnesses |
 | `encodeRpcReceipt`, `decodeReceipt`, `buildReceiptProof` | Consensus receipt encoding and receipt-trie reconstruction |
@@ -123,6 +124,41 @@ internal nodes. The preparation helpers reject unsupported internal nodes, even
 if the proof is valid for the constrained verifier. See the
 [public functions guide](../../docs/proofs.md#public-functions) for the Noir ABI
 and the flow that keeps the slot and value private.
+
+For multiple slots of the same account, call `preparePublicStorageBatch(input)`
+on the response from one `eth_getProof` call. Its defaults match the
+[reuse example](../../examples/public_proof_reuse) with capacity for two slots, fifteen shared
+node rows and eight internal nodes per slot. Pass the table with `nodeCount`
+and the claims with `proofCount`. Map the witness to the generated Aztec client
+as follows, using the same `preparePublicAccount` output as above.
+
+```ts
+import { preparePublicStorageBatch } from "ethereum-storage-proofs";
+
+const batch = await preparePublicStorageBatch(input);
+contract.methods.prove_slots(
+  blockNumber,
+  account.account.map(BigInt),
+  account.accountNodes.map((fields) => ({ fields: fields.map(BigInt) })),
+  account.accountCount,
+  batch.storageNodes.map((fields) => ({ fields: fields.map(BigInt) })),
+  batch.nodeCount,
+  batch.proofs.map((proof) => ({
+    slot_key: proof.slotKey,
+    value_high: BigInt(proof.valueHigh),
+    value_low: BigInt(proof.valueLow),
+    node_indices: proof.nodeIndices,
+    count: proof.count,
+  })),
+  batch.proofCount,
+);
+```
+
+For later calls against the same snapshot, the example's `cache_account` uses
+the block number and the packed account, node array and node count.
+`prove_slot_from_cache` takes the block number, account address
+(`BigInt(account.account[0])`) and the slot arguments from `preparePublicStorage`.
+The contract reads the current recorded root for the block on every call.
 
 ## Choosing capacities
 

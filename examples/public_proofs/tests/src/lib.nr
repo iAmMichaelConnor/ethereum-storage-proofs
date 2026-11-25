@@ -2,7 +2,7 @@
 //! `prove_slot_in_public` are the body of `prove_slot`, `prove_storage_in_private` the private part of
 //! `prove_slot_privately` and `prove_account_in_public` the body of `check_account`. The proof is a saved mainnet
 //! USDT balance slot from `fixture.nr`.
-mod fixture;
+pub mod fixture;
 
 use aztec::{
     context::PublicContext,

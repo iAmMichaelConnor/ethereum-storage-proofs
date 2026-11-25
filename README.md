@@ -49,7 +49,7 @@ replay rules to accept, is the application's job. Read the
 | --- | --- |
 | [`ethereum_proofs`](noir/ethereum_proofs) | Account and storage inclusion (`proof`), shared-node batches (`batch`), absence (`absence`), receipts and events (`receipts`, `events`), RLP framing (`rlp`), Solidity slot keys (`slot_key`), leaf encoders (`encoding`) |
 | [`ethereum_recursive_proofs`](noir/ethereum_recursive_proofs) | Claims, domain-separated statements and UltraHonk recursive consumers, including linked app and user proofs |
-| [`ethereum_public_proofs`](noir/ethereum_public_proofs) | Account and storage inclusion in unconstrained code, for Aztec public functions: packed inputs hashed with the AVM's Keccak opcode |
+| [`ethereum_public_proofs`](noir/ethereum_public_proofs) | Account and storage inclusion in unconstrained code for Aztec public functions, including same-account batches with shared node hashes |
 | [`ethereum_ssz`](noir/ethereum_ssz) | SHA-256 SSZ branches and the Deneb/Electra/Fulu execution-payload anchor |
 | [`ethereum_keccak`](noir/ethereum_keccak) | Keccak-256 over bounded buffers, safe under a disabled caller, and a streaming `KeccakHasher` |
 | [`ethereum_types`](noir/ethereum_types) | `Account`, `StorageSlot` and canonical quantity conversions |
@@ -104,6 +104,7 @@ tests of its logic:
 | [`event_proof`](examples/event_proof) | Applies an effect once per Ethereum log of one kind, proven under the receipts root of a pinned block |
 | [`registry_gate`](examples/registry_gate) | Admits the Aztec addresses an L1 registry mapping lists, proven under a pinned state root |
 | [`public_proofs`](examples/public_proofs) | Proves a slot under a recorded state root in a public function, or proves the slot in private and only its contract's account in public |
+| [`public_proof_reuse`](examples/public_proof_reuse) | Verifies multiple slots with one account proof, or caches a verified account storage root for later calls against the same Ethereum snapshot |
 
 ## Compatibility
 
@@ -232,7 +233,8 @@ Profiles and circuit preparation also need Python 3.11+. The
 API, CLI and proving.
 
 For Aztec public functions, `preparePublicAccount` and `preparePublicStorage`
-turn that same `eth_getProof` envelope into packed contract arguments. See the
+turn that same `eth_getProof` envelope into packed contract arguments.
+`preparePublicStorageBatch` builds a shared node table for multiple slots. See the
 [SDK public proof example](packages/ethereum-storage-proofs/README.md#aztec-public-functions).
 
 ## Benchmarks
@@ -281,14 +283,14 @@ mv noir/export export
 
 L2 gas of the [`public_proofs`](examples/public_proofs) example's public functions on
 a saved mainnet proof of a USDT balance slot (7 account nodes, 7 storage nodes),
-simulated with Aztec 6.0.0's public transaction simulator on 2026-11-21. The
+simulated with Aztec 6.0.0's public transaction simulator on 2026-11-25. The
 counts are the public L2 gas; each transaction also pays a fixed 540,000. A
 transaction's public functions may use at most 6,000,000.
 
 | Function | Proves | Public L2 gas |
 | --- | --- | ---: |
-| `prove_slot` | Account and slot, 10 + 8 node capacity | 4,125,176 |
-| `check_account` | Account only (the slot is proven in private), 10-node capacity | 2,171,219 |
+| `prove_slot` | Account and slot, 10 + 8 node capacity | 4,112,954 |
+| `check_account` | Account only (the slot is proven in private), 10-node capacity | 2,164,865 |
 
 Keccak-f[1600] costs 58,176 L2 gas per 136-byte block and is most of the total:
 an 8-node path of full branch nodes needs about 33 blocks. Of `prove_slot`'s total,
@@ -298,6 +300,25 @@ fields into lanes, parsing nodes and encoding leaves. Each node of capacity
 costs about 7,300 L2 gas to decode whether used or not (about 16,000 as a plain
 `[Field; 23]` argument; the example decodes nodes with its own type). See
 [public functions](docs/proofs.md#public-functions).
+
+#### Reusing an account proof
+
+The [`public_proof_reuse`](examples/public_proof_reuse) example was simulated on
+Aztec 6.0.0 with two distinct slots in a synthetic Ethereum trie. Its account
+and slot paths each have seven internal nodes with the same RLP lengths as the
+USDT benchmark above. The slot paths share their full storage root branch.
+
+| Operation | Public L2 gas |
+| --- | ---: |
+| Two independent `prove_slot` calls in separate transactions | 8,213,554 total |
+| `prove_slots` with both slots | 5,835,689 |
+| `cache_account` once for the snapshot | 2,209,414 |
+| `prove_slot_from_cache` | 1,991,120–1,997,126 per slot |
+
+The batch uses about 29% less public L2 gas than the two independent calls,
+before fixed transaction costs. Gas depends on the paths. Deep or wide batches
+can hit the transaction cap even when their calldata fits the example's arrays.
+The cache supports separate slot calls after registration.
 
 ## Security
 

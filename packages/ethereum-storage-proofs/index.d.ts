@@ -610,3 +610,20 @@ export function preparePublicStorage(
   input: ProofEnvelope,
   opts?: { storageDepth?: number; slotIndex?: number },
 ): Promise<PublicStorageWitness>;
+export interface PublicStorageBatchWitness {
+  storageRoot: Root;
+  storageNodes: string[][];
+  nodeCount: number;
+  proofs: {
+    slotKey: number[];
+    valueHigh: string;
+    valueLow: string;
+    nodeIndices: number[];
+    count: number;
+  }[];
+  proofCount: number;
+}
+export function preparePublicStorageBatch(
+  input: ProofEnvelope,
+  opts?: { slotCapacity?: number; nodeCapacity?: number; pathDepth?: number },
+): Promise<PublicStorageBatchWitness>;

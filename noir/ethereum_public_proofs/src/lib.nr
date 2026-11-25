@@ -20,6 +20,7 @@ mod sink;
 mod node;
 mod leaf;
 pub mod pack;
+mod batch_tests;
 mod fixtures_tests;
 
 pub use leaf::PublicAccount;
@@ -125,4 +126,58 @@ pub unconstrained fn verify_account_and_storage<let AD: u32, let SD: u32>(
         storage_nodes,
         storage_count,
     );
+}
+
+/// One nonzero slot claim and its path through a packed node table.
+pub struct StorageProof<let D: u32> {
+    pub slot_key: [u8; 32],
+    pub value_high: u128,
+    pub value_low: u128,
+    pub node_indices: [u32; D],
+    pub count: u32,
+}
+
+/// Verify `proof_count` nonzero slot values under one authenticated storage root.
+/// Each path references rows in `nodes[0..node_count]`, ordered from the root
+/// to the leaf's parent. Paths may share rows. The verifier hashes each visited
+/// row once per call and independently checks each slot's route and leaf.
+pub unconstrained fn verify_storage_batch<let N: u32, let S: u32, let D: u32>(
+    storage_root: [u64; 4],
+    nodes: [[Field; NODE_FIELDS]; N],
+    node_count: u32,
+    proofs: [StorageProof<D>; S],
+    proof_count: u32,
+) {
+    assert(proof_count > 0, "Storage batch is empty");
+    assert(proof_count <= S, "Storage proof count exceeds capacity");
+    let mut table = node::NodeTable::new(nodes, node_count);
+    for i in 0..proof_count {
+        let proof = proofs[i];
+        let key_hash = sink::hash_word(proof.slot_key);
+        let (reference, nibble) =
+            table.walk(storage_root, key_hash, proof.node_indices, proof.count);
+        leaf::check_storage(
+            reference,
+            nibble,
+            key_hash,
+            proof.value_high,
+            proof.value_low,
+        );
+    }
+}
+
+/// Prove an account under an authenticated state root, then verify a batch of
+/// nonzero slot values under that account's storage root.
+pub unconstrained fn verify_account_and_storage_batch<let AD: u32, let N: u32, let S: u32, let D: u32>(
+    state_root: [u64; 4],
+    account: PublicAccount,
+    account_nodes: [[Field; NODE_FIELDS]; AD],
+    account_count: u32,
+    nodes: [[Field; NODE_FIELDS]; N],
+    node_count: u32,
+    proofs: [StorageProof<D>; S],
+    proof_count: u32,
+) {
+    verify_account(state_root, account, account_nodes, account_count);
+    verify_storage_batch(account.storage_hash, nodes, node_count, proofs, proof_count);
 }

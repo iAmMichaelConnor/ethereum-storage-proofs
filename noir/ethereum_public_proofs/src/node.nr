@@ -257,14 +257,16 @@ pub(crate) unconstrained fn nibble_at(key: [u64; 4], index: u32) -> u8 {
     }
 }
 
-/// Check one node against `parent` and return the reference it holds for the
-/// key from `nibble`, and the next nibble.
-unconstrained fn step(
-    node: [Field; NODE_FIELDS],
-    parent: [u64; 4],
-    key: [u64; 4],
-    nibble: u32,
-) -> (Reference, u32) {
+struct NodeHash {
+    digest: [u64; 4],
+    start: u32,
+    length: u32,
+    full_branch: bool,
+}
+
+/// Hash a packed node and record the layout needed to route through it.
+#[inline_always]
+unconstrained fn hash_packed_node(node: [Field; NODE_FIELDS]) -> NodeHash {
     // The list header gives the node's length. Its bytes are the low bytes of
     // field 0 (see `byte`).
     let head: [u8; 24] = node[0].to_be_bytes();
@@ -280,6 +282,20 @@ unconstrained fn step(
     };
     assert(length < NODE_CAPACITY, "Node exceeds capacity");
     let (digest, full_branch) = hash_node(node, length);
+    NodeHash { digest, start, length, full_branch }
+}
+
+/// Check one node against `parent` and return the reference it holds for the
+/// key from `nibble`, and the next nibble. `hash` must come from this node.
+#[inline_always]
+unconstrained fn step(
+    node: [Field; NODE_FIELDS],
+    hash: NodeHash,
+    parent: [u64; 4],
+    key: [u64; 4],
+    nibble: u32,
+) -> (Reference, u32) {
+    let NodeHash { digest, start, length, full_branch } = hash;
     assert_eq(digest, parent, "Node hash differs from its parent reference");
 
     let selected = nibble_at(key, nibble) as u32;
@@ -407,6 +423,14 @@ unconstrained fn short_node(
     }
 }
 
+#[inline_always]
+unconstrained fn assert_can_step(reference: Reference, nibble: u32) {
+    // With hashed 32-byte keys, an embedded branch or extension needs two
+    // keys sharing about 56 nibbles of their Keccak hash; only leaves embed.
+    assert_eq(reference.length, 32, "Embedded internal nodes are not supported");
+    assert(nibble < 64, "Path is longer than the key");
+}
+
 /// Walk `count` nodes from `root` along `key`. Returns the leaf's reference and
 /// the number of key nibbles consumed.
 pub(crate) unconstrained fn walk<let D: u32>(
@@ -419,15 +443,58 @@ pub(crate) unconstrained fn walk<let D: u32>(
     let mut reference = Reference { lanes: root, length: 32 };
     let mut nibble = 0;
     for i in 0..count {
-        // With hashed 32-byte keys, an embedded branch or extension needs two
-        // keys sharing about 56 nibbles of their Keccak hash; only leaves embed.
-        assert_eq(reference.length, 32, "Embedded internal nodes are not supported");
-        assert(nibble < 64, "Path is longer than the key");
-        let (child, next) = step(nodes[i], reference.lanes, key, nibble);
+        assert_can_step(reference, nibble);
+        let node = nodes[i];
+        let (child, next) = step(node, hash_packed_node(node), reference.lanes, key, nibble);
         reference = child;
         nibble = next;
     }
     (reference, nibble)
+}
+
+/// Immutable packed nodes and their call-local hashes. Each cached hash is
+/// computed from the row at the same index and is checked against the current
+/// parent reference on every visit.
+pub(crate) struct NodeTable<let N: u32> {
+    nodes: [[Field; NODE_FIELDS]; N],
+    count: u32,
+    hashes: [Option<NodeHash>; N],
+}
+
+impl<let N: u32> NodeTable<N> {
+    pub(crate) unconstrained fn new(nodes: [[Field; NODE_FIELDS]; N], count: u32) -> Self {
+        assert(count <= N, "Node table count exceeds capacity");
+        NodeTable { nodes, count, hashes: [Option::none(); N] }
+    }
+
+    pub(crate) unconstrained fn walk<let D: u32>(
+        &mut self,
+        root: [u64; 4],
+        key: [u64; 4],
+        indices: [u32; D],
+        count: u32,
+    ) -> (Reference, u32) {
+        assert(count <= D, "Node count exceeds capacity");
+        let mut reference = Reference { lanes: root, length: 32 };
+        let mut nibble = 0;
+        for i in 0..count {
+            assert_can_step(reference, nibble);
+            let index = indices[i];
+            assert(index < self.count, "Node index exceeds table count");
+            let node = self.nodes[index];
+            let hash = if self.hashes[index].is_some() {
+                self.hashes[index].unwrap()
+            } else {
+                let hash = hash_packed_node(node);
+                self.hashes[index] = Option::some(hash);
+                hash
+            };
+            let (child, next) = step(node, hash, reference.lanes, key, nibble);
+            reference = child;
+            nibble = next;
+        }
+        (reference, nibble)
+    }
 }
 
 /// The packed node of `length` pattern bytes, and the Keccak-256 of those bytes
