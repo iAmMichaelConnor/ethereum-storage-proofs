@@ -27,7 +27,7 @@ as a path dependency relative to your `Nargo.toml`. See the
 | `ethereum_keccak` | `keccak256`, `keccak256_limbs`, streaming `KeccakHasher` | Pinned `keccak256` |
 | `ethereum_recursive_proofs` | Claims, statements, predicates and recursive consumers; `receipts`, `absence` | Types + pinned `poseidon` |
 | `ethereum_ssz` | SHA-256 branches and the Deneb execution anchor | None |
-| `ethereum_public_proofs` | Unconstrained `verify_account`, `verify_storage`, `verify_account_and_storage`, `verify_path` and leaf checks over packed inputs; `PublicAccount`; `pack` | `ethereum_proofs` (for `pack`) |
+| `ethereum_public_proofs` | Unconstrained account, storage and batch verification over packed inputs, with separate path and leaf checks; `PublicAccount`, `StorageProof`, `pack` | `ethereum_proofs` (for `pack`) |
 | `ethereum_types` | `Account`, `StorageSlot` and canonical numeric conversions | None |
 | `ethereum_storage_proofs` | Facade re-exporting all of the above, including `recursive_proof`, `public_proof` and `ssz` | Packages above |
 
@@ -453,6 +453,33 @@ Ethereum's canonical trie structure. It supports account and nonzero storage
 inclusion, including embedded terminal leaves shorter than 32 bytes. It rejects
 embedded internal branches and extensions. Use the circuit APIs for absence,
 receipts and events.
+
+### Reusing verified accounts
+
+Use `verify_account_and_storage_batch` to verify one account and several nonzero
+slots in one public call. Pass one table of packed storage nodes and one
+`StorageProof<D>` per slot with its raw key, value halves, and path indices. Use
+`verify_storage_batch` when you already have an authenticated storage root.
+The table and proof counts select the used prefixes. Each path has its own node
+count. The verifier hashes each visited table row once, checks it against the
+expected parent on every visit, and follows each slot key to its own terminal
+value. The SDK's `preparePublicStorageBatch` preserves the response's slot order
+and shares identical nodes. Capacities bound the calldata and work. The same
+public proof shape limits apply to batches.
+
+The [public proof reuse example](../examples/public_proof_reuse) also shows
+reuse across transactions. `cache_account` verifies the account against the
+state root recorded for the requested block, then writes its storage root under
+that exact state root and account address. `prove_slot_from_cache` reads the
+block's state root again, looks up that pair, and verifies the requested slot
+under the cached storage root. Recording a different root for the same block
+requires an entry verified under the replacement root. Each deployment in this
+example serves one Ethereum chain.
+
+The cache authenticates account storage roots for Ethereum snapshots. Keep the
+application's chain, block, freshness, account and slot policy in the consumer.
+The example lets the admin select accepted roots and demonstrates a repeatable
+counter effect.
 
 ## Consumer obligations
 

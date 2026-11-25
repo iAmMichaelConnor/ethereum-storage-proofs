@@ -81,7 +81,7 @@ mode:
 | `ethereum_keccak` | 12 | 3 s, 0.2 GB | 4 s, 0.3 GB |
 | `ethereum_proofs` | 58 | 3 s, 0.3 GB | 6 s, 0.3 GB |
 | `ethereum_recursive_proofs` | 20 | 2 s, 0.3 GB | 3 s, 0.4 GB |
-| `ethereum_public_proofs` | 64 | 2 s, 0.3 GB | not run (its tests are unconstrained) |
+| `ethereum_public_proofs` | 70 | 2 s, 0.3 GB | not run (its tests are unconstrained) |
 | `ethereum_storage_proofs` | 1441 | 1 min 18 s, 1.6 GB | unmeasured (over 10 min) |
 
 `ethereum_ssz` has no tests of its own and is not in the test matrices:

@@ -9,6 +9,7 @@ import {
   packPublicNode,
   preparePublicAccount,
   preparePublicStorage,
+  preparePublicStorageBatch,
 } from "../../input-preparation/public.mjs";
 
 const fixture = (name) =>
@@ -53,6 +54,29 @@ test("reject a valid proof with an embedded internal node in public preparation"
   assert.equal(witness.storage_count, 2);
   assert(witness.storage_nodes[1].length < 32);
   await assert.rejects(preparePublicStorage(input), /Embedded internal nodes are not supported/);
+  await assert.rejects(preparePublicStorageBatch(input), /Embedded internal nodes are not supported/);
+});
+
+test("prepare public batch in request order and share the storage root node", async () => {
+  const input = fixture("batch-shared-rpc");
+  const slotCount = input.proof.storageProof.length;
+  await assert.rejects(preparePublicStorageBatch(input), /Slot capacity 2 exceeded/);
+  const batch = await preparePublicStorageBatch(input, { slotCapacity: slotCount + 1 });
+  assert.equal(batch.proofCount, slotCount);
+  assert.equal(batch.proofs.length, slotCount + 1);
+  assert.equal(batch.proofs[slotCount].count, 0);
+  for (const [i, proof] of batch.proofs.slice(0, slotCount).entries()) {
+    const single = await preparePublicStorage(input, { slotIndex: i });
+    assert.deepEqual(batch.storageRoot, single.storageRoot);
+    assert.deepEqual(proof.slotKey, single.slotKey);
+    assert.equal(proof.valueHigh, single.valueHigh);
+    assert.equal(proof.valueLow, single.valueLow);
+    assert.equal(proof.count, single.storageCount);
+    const nodes = proof.nodeIndices.slice(0, proof.count).map((index) => batch.storageNodes[index]);
+    assert.deepEqual(nodes, single.storageNodes.slice(0, single.storageCount));
+    assert.equal(proof.nodeIndices[0], 0);
+  }
+  assert(batch.nodeCount < batch.proofs.reduce((sum, proof) => sum + proof.count, 0));
 });
 
 test("reject a node beyond the packed capacity", () => {

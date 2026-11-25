@@ -48,4 +48,5 @@ export {
   packPublicAccount,
   preparePublicAccount,
   preparePublicStorage,
+  preparePublicStorageBatch,
 } from "./public.mjs";
