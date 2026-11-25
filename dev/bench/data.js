@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794431833319,
+  "lastUpdate": 1795597008331,
   "repoUrl": "https://github.com/iAmMichaelConnor/ethereum-storage-proofs",
   "entries": {
     "ACIR Opcodes": [
@@ -590,6 +590,195 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/iAmMichaelConnor/ethereum-storage-proofs/commit/1ba0085eb76b13a4984985334fab145be8751a6a"
         },
         "date": 1794431821444,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "account_absent/main",
+            "value": 27267,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "account_balance/main",
+            "value": 8473,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "account_d8/main",
+            "value": 27361,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "batch4/main",
+            "value": 36626,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "consume_storage/main",
+            "value": 83,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "erc20_balance/main",
+            "value": 17016,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "event/main",
+            "value": 38271,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "keccak256_135/main",
+            "value": 394,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "keccak256_32/main",
+            "value": 189,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "keccak256_532/main",
+            "value": 1204,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "l1_d8/main",
+            "value": 63297,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "l1_mixed/main",
+            "value": 55251,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "l1_zero/main",
+            "value": 42384,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "linked_batch4/main",
+            "value": 335,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "linked_storage/main",
+            "value": 124,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "linked_threshold/main",
+            "value": 124,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "linked_zero/main",
+            "value": 89,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "receipt_summary/main",
+            "value": 22169,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "slot_mapping/main",
+            "value": 302,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "ssz_branch_5/main",
+            "value": 1613,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "ssz_deneb_anchor/main",
+            "value": 3734,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "storage_d8/main",
+            "value": 35960,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "storage_deep/main",
+            "value": 69696,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "storage_general_d3_b135/main",
+            "value": 12009,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "storage_general_d8_b532/main",
+            "value": 35481,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "storage_hashed_d1_b532/main",
+            "value": 4847,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "storage_hashed_d3_b135/main",
+            "value": 8451,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "storage_hashed_d3_b532/main",
+            "value": 10889,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "storage_hashed_d8_b532/main",
+            "value": 25994,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "storage_mixed_d7_b532/main",
+            "value": 21509,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "storage_small/main",
+            "value": 12197,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "storage_zero/main",
+            "value": 27273,
+            "unit": "acir_opcodes"
+          },
+          {
+            "name": "threshold_d8/main",
+            "value": 36309,
+            "unit": "acir_opcodes"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mike@aztec.foundation",
+            "name": "Michael Connor",
+            "username": "iAmMichaelConnor"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3a76682e6eeb528f4214f07fa9d9101581493f74",
+          "message": "feat: verify account and storage proofs in Aztec public functions (#3)\n\n* feat: verify account and storage proofs in Aztec public functions\n\nAdd ethereum_public_proofs: unconstrained account and storage inclusion\nfor Aztec public functions (the AVM). A node is passed as its RLP bytes\npacked into 64-bit Keccak lanes, three per field, and is hashed block by\nblock with the Keccak-f[1600] opcode before its selected child is read.\nAccounts and slot values are integers, so leaves are canonical by\nconstruction. A walk refuses to descend into an empty branch child, and\na leaf check only accepts the key its path walked.\n\nOn a saved mainnet USDT balance proof, the account and the slot together\ncost 4.65M public L2 gas, and the account alone 2.43M.\n\nThe public_proofs example proves a slot under a recorded state root in\none public call, or proves the slot in private and its contract's account\nin public. The SDK gains packPublicNode, packPublicAccount,\npreparePublicAccount and preparePublicStorage.\n\n* fix(public): cover the short-node checks and say where each package runs\n\nTest the short-branch value check, an empty extension path and an extension\nthat would consume the whole key, and give the two empty-extension checks\ndistinct messages. Comment the defence-in-depth checks, credit only leaf.nr in\nNOTICE, align the SDK packers with from_fields, and document in the README and\npackage docs which packages suit circuits and which suit public functions.\n\n* perf(public): split lanes with a division the compiler can range-check\n\nShifting a u128 right by 64 and casting to u64 makes the compiler emit a\nshift-amount check and a truncation (two extra casts) for every lane. Dividing\nby 2^64 instead proves the quotient fits a u64, so the cast is a single\nopcode. The lanes are unchanged.\n\n* perf(public): read node bytes with one radix decomposition\n\nA byte read extracted a lane (index arithmetic, a three-way branch and\ncasts) and shifted it. Decomposing the field that holds the byte into 24\nbig-endian bytes takes one opcode. A field of 2^192 or more, whose high\nbits the lanes drop, fails to decompose, so byte reads still agree with\nthe hashed lanes.\n\n* perf(examples): decode public proof nodes with a dedicated argument type\n\naztec-nr decodes a [Field; N] argument with a generic loop that costs\nabout 700 L2 gas per field, so each 23-field node slot cost about 16,000\nwhether used or not. PublicProofs now takes its nodes as PackedNode\n{ fields }, whose Deserialize reads the fields into an array literal\n(about 7,300 per node), and hands the library the same [[Field; 23]; D]\nas before. Callers pass each node as { fields }. The library, the SDK\npacker and the generated fixtures are unchanged.\n\n* style(examples): format the public_proofs tests\n\n* perf(public): unroll the node hash over its at most four blocks\n\nThe block loop selected each block's lanes with a run-time branch and\nmerged 17 lanes per block. Unrolled, every block's lane positions are\nconstants. Blocks 1 to length / 136 are now all absorbed, including a\nblock that holds only padding: its node bytes are zero for any packed\nnode, so the digest is unchanged, and a nonzero byte there now makes\nthe node fail to match instead of being ignored. Tests compare the\ndigest with the byte-wise sponge on both sides of each block boundary.\n\n* perf(public): take a full branch's child without scanning its items\n\nMost nodes on a path are branches whose 16 children are all hashes and\nwhose value is empty: 532 bytes, header f9 02 11. While hashing a node of\nfour blocks, check its lanes for exactly that layout: the header, 0xa0\nat byte 3 + 33j for each child j and 0x80 at byte 531. These are the\nprefixes an item scan reads at the offsets it reaches, so they fix the\nsame parse, and the selected child is the hash at byte 4 + 33j. Any other\nbranch is scanned as before. The value check and the missing-child check\nare part of the layout. A test checks on every full branch of the mainnet\nfixture that the layout holds and that each child's offset matches the\nscan.\n\n* perf(public): read a node's list header with one decomposition\n\nThe header's one to three bytes are the low bytes of field 0, so decompose\nthat field once instead of once per byte.\n\n* perf(public): take a reference's lanes from the two or three fields that hold them\n\nlanes_at extracted each of its five lanes separately, each with its own\nfield index, three-way branch and casts. The five lanes lie in two or\nthree consecutive fields; split those and pick the lanes by position.\nA test compares lanes_at and byte with the bytes at every offset.\n\n* perf(public): size leaf integers arithmetically instead of through byte arrays\n\nThe leaf encoders built a 32-byte array for each 256-bit integer (two\ndecompositions and a 32-step copy) and scanned it for the first nonzero\nbyte. The minimal length now comes from comparisons on the 128-bit\nhalves, and only the bytes that are emitted are decomposed. The encoding\nis unchanged: still the minimal big-endian integer, so canonical by\nconstruction. New leaf-value fixtures cover the 8/9- and 16/17-byte\nboundaries.\n\n* perf(public): check the account leaf without re-deriving the walked key\n\nverify_account walks keccak(address) and then called verify_account_leaf,\nwhich hashes the address again to compare it with the path's key. The\npath end was built from that same hash in the line before, so the\ncomparison always holds; call the leaf check directly. verify_account_leaf\nkeeps the comparison for paths walked separately.\n\n* docs: update the public-function gas figures\n\n* fix(public): reject a leaf longer than 68 bytes where a branch is expected\n\nA node longer than 68 bytes that is not a full branch was read as a branch up\nto the selected child. A leaf can be that long: a single-slot storage trie with\na 31-byte value is one 69-byte leaf. Walking into it along a key whose first\nnibble is 1 read the value item as a child hash, so a value chosen as the hash\nof a leaf for an absent slot proved that slot. Check that such a node has more\nthan two items before reading it as a branch, and test the forged case.\n\nAlso test a wrong low nibble in an extension path, show PackedNode in the\npublic-function example, credit sink.nr's Sink and Matcher in NOTICE, and\nupdate the gas figures and test count.\n\n* docs(public): fix the short-node comment\n\n* test(public): pin the rejection of an account leaf walked as a node\n\nGive the low-nibble extension check its own message, and describe the\nmissing-child test by what it prevents.\n\n* fix: address Aztec public proof review findings",
+          "timestamp": "2026-11-25T08:55:44Z",
+          "tree_id": "89495c55a45ad94f17416b278498689ada8aa97c",
+          "url": "https://github.com/iAmMichaelConnor/ethereum-storage-proofs/commit/3a76682e6eeb528f4214f07fa9d9101581493f74"
+        },
+        "date": 1795597008007,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
