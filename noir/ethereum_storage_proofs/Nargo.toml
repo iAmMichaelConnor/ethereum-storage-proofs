@@ -8,3 +8,4 @@ compiler_version = ">=1.0.0"
 ethereum_recursive_proofs = { path = "../ethereum_recursive_proofs" }
 ethereum_ssz = { path = "../ethereum_ssz" }
 ethereum_proofs = { path = "../ethereum_proofs" }
+ethereum_public_proofs = { path = "../ethereum_public_proofs" }

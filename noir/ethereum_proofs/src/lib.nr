@@ -1,4 +1,8 @@
 //! Ethereum account and nonzero storage inclusion using canonical MPT paths.
+//!
+//! For circuits: Noir programs and Aztec private functions. In an Aztec public
+//! function it is correct but costs far more L2 gas than a transaction allows; use
+//! `ethereum_public_proofs` there.
 pub use ethereum_types as types;
 pub mod proof;
 pub mod batch;

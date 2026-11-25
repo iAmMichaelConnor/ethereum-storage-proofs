@@ -1,5 +1,5 @@
 > [!WARNING]
-> **This code has not been audited.** It is experimental software, provided "as is", without warranty of any kind (see [LICENSE](LICENSE)). A bug can leave a circuit under-constrained, so that invalid proofs are accepted. Do not rely on it to protect real assets or sensitive data without your own independent review.
+> **This code has not been audited.** It is experimental software, provided "as is", without warranty of any kind (see [LICENSE](LICENSE)). A verification bug can let an invalid claim pass. Do not rely on it to protect real assets or sensitive data without your own independent review.
 
 > [!NOTE]
 > This is an independent project. It is not affiliated with, sponsored by or endorsed by the Ethereum Foundation or any other Ethereum organisation. Names and logos belong to their owners and are used only to say what this software works with.
@@ -8,9 +8,10 @@
 
 # ethereum-storage-proofs
 
-**Prove facts about Ethereum state inside a Noir circuit, and reveal only what you
-choose.** Bring L1 balances, storage and events into any Noir program or Aztec
-private function, straight from `eth_getProof`.
+**Verify Ethereum state in Noir and Aztec.** Use Noir circuits and Aztec private
+functions to prove facts about Ethereum balances, storage, receipts and events
+while controlling what you reveal. Aztec public functions can verify account and
+nonzero storage inclusion directly from `eth_getProof` inputs.
 
 For example, you can:
 
@@ -33,8 +34,8 @@ The claims can be composed, and programmably customised or expanded: one circuit
 can combine several of them and add its own checks on the values they expose (a
 balance, an address, an event's fields).
 
-Everything is proven under a root you already trust: Merkle-Patricia proofs in the
-state and receipts tries, and SSZ branches up to a beacon block root.
+Every route starts from a root you already trust. The state and receipts routes
+check Merkle-Patricia proofs, and SSZ branches anchor data to a beacon block root.
 
 The libraries check the opening you give them. They do **not** establish Ethereum
 consensus or finality, nor that a root belongs to the chain you intend: binding the
@@ -48,6 +49,7 @@ replay rules to accept, is the application's job. Read the
 | --- | --- |
 | [`ethereum_proofs`](noir/ethereum_proofs) | Account and storage inclusion (`proof`), shared-node batches (`batch`), absence (`absence`), receipts and events (`receipts`, `events`), RLP framing (`rlp`), Solidity slot keys (`slot_key`), leaf encoders (`encoding`) |
 | [`ethereum_recursive_proofs`](noir/ethereum_recursive_proofs) | Claims, domain-separated statements and UltraHonk recursive consumers, including linked app and user proofs |
+| [`ethereum_public_proofs`](noir/ethereum_public_proofs) | Account and storage inclusion in unconstrained code, for Aztec public functions: packed inputs hashed with the AVM's Keccak opcode |
 | [`ethereum_ssz`](noir/ethereum_ssz) | SHA-256 SSZ branches and the Deneb/Electra/Fulu execution-payload anchor |
 | [`ethereum_keccak`](noir/ethereum_keccak) | Keccak-256 over bounded buffers, safe under a disabled caller, and a streaming `KeccakHasher` |
 | [`ethereum_types`](noir/ethereum_types) | `Account`, `StorageSlot` and canonical quantity conversions |
@@ -55,8 +57,8 @@ replay rules to accept, is the application's job. Read the
 
 | Claim | API (direct; recursive) | What the caller still supplies |
 | --- | --- | --- |
-| Account exists with given fields | `verify_account_proof`; `verify_account_recursive_proof` | Authenticated state root, intended address |
-| Nonzero storage value(s) | `verify_storage_proof`, `verify_account_and_storage_proof`, `batch`; `verify_storage_recursive_proof`, `verify_l1_recursive_proof`, `verify_batch_storage_recursive_proof` | Root and account policy, [slot key](docs/proofs.md#slot-keys-and-conversions), authorized producer key |
+| Account exists with given fields | `verify_account_proof`; `verify_account_recursive_proof`; in public functions `ethereum_public_proofs::verify_account` | Authenticated state root, intended address |
+| Nonzero storage value(s) | `verify_storage_proof`, `verify_account_and_storage_proof`, `batch`; `verify_storage_recursive_proof`, `verify_l1_recursive_proof`, `verify_batch_storage_recursive_proof`; in public functions `ethereum_public_proofs::verify_storage`, `verify_account_and_storage` | Authenticated root, intended account and [slot key](docs/proofs.md#slot-keys-and-conversions), authorized producer key for recursive proofs |
 | Storage value at least a minimum (full uint256) | `verify_threshold_recursive_proof` | Slot and minimum ([threshold semantics](docs/proofs.md#recursive-proofs)) |
 | Zero slot, absent account, present account with a zero slot | `absence`; `ethereum_recursive_proofs::absence` | Root and key policy |
 | Receipt or exact event log | `verify_receipt`, `verify_event`; `ethereum_recursive_proofs::receipts` | Authenticated receipts root, transaction index, receipt-local log index |
@@ -66,6 +68,30 @@ replay rules to accept, is the application's job. Read the
 Capacities (path depth and bytes per node) are compile-time and fail closed. A
 shape fits the proofs it was sized for, and a third party can lengthen mainnet
 paths: see [choosing capacities](docs/internals.md#choosing-capacities).
+
+### Circuits or public functions
+
+Circuits (Noir programs and Aztec private functions) and Aztec public functions
+need different code. A circuit pays per gate, and its checks are what make the
+proof sound. A public function runs as unconstrained bytecode on the AVM, pays L2
+gas per instruction, and may use at most 6,000,000 per transaction. Pick the
+package by where it runs:
+
+| Package | Circuits: Noir programs, Aztec private functions | Aztec public functions |
+| --- | --- | --- |
+| `ethereum_proofs`, `ethereum_keccak` | Yes: built for gate count | No: correct, but far too costly; a storage proof runs out of L2 gas |
+| `ethereum_recursive_proofs` | Yes: the consumers verify a producer proof in an Aztec private function | No: a public function cannot verify a proof |
+| `ethereum_ssz` | Yes | Not measured |
+| `ethereum_public_proofs` | No: every entry point is `unconstrained`, so it proves nothing in a circuit | Yes: built for L2 gas (account and nonzero storage inclusion only) |
+| `ethereum_types` | Yes | Yes |
+
+For a fully public check, pass the account, slot key and value to
+`ethereum_public_proofs::verify_account_and_storage`. To keep the slot and value
+private while updating public state, use `ethereum_proofs` for the slot in private
+and enqueue a public account check against the same storage root. Both flows are
+shown in the [`public_proofs` example](examples/public_proofs). The
+[public functions guide](docs/proofs.md#public-functions) covers input packing,
+root authentication and supported proof shapes.
 
 ### Aztec examples
 
@@ -77,6 +103,7 @@ tests of its logic:
 | [`storage_proofs`](examples/storage_proofs) | Verifies an app account proof and a user batch proof recursively, against producer keys and a state root the deployer pins |
 | [`event_proof`](examples/event_proof) | Applies an effect once per Ethereum log of one kind, proven under the receipts root of a pinned block |
 | [`registry_gate`](examples/registry_gate) | Admits the Aztec addresses an L1 registry mapping lists, proven under a pinned state root |
+| [`public_proofs`](examples/public_proofs) | Proves a slot under a recorded state root in a public function, or proves the slot in private and only its contract's account in public |
 
 ## Compatibility
 
@@ -108,15 +135,22 @@ ethereum_proofs = { git = "https://github.com/iAmMichaelConnor/ethereum-storage-
 ethereum_recursive_proofs = { git = "https://github.com/iAmMichaelConnor/ethereum-storage-proofs", tag = "v0.1.0", directory = "noir/ethereum_recursive_proofs" }
 ```
 
+The public verifier is new in this checkout. Until a release includes it, use a
+path to `noir/ethereum_public_proofs` in this checkout, relative to your
+`Nargo.toml`. If your contract also imports `ethereum_proofs`, use the same checkout
+for both dependencies. The [Aztec example manifest](examples/public_proofs/contract/Nargo.toml)
+shows both imports.
+
 `ethereum_proofs` re-exports `ethereum_types` (as `types`) and `ethereum_keccak`
 (as `keccak`).
 
 ## Usage
 
-Roots and hashes are four little-endian `u64` lanes in digest order; quantities are
-minimal big-endian bytes, left-aligned, with their length. Path nodes are the RLP
-bytes from `eth_getProof`, excluding the leaf, zero-padded to the node capacity
-([representation](docs/proofs.md#representation)).
+In the circuit examples below, roots and hashes are four little-endian `u64`
+lanes in digest order. Quantities are minimal big-endian bytes, left-aligned,
+with their length. Path nodes are the RLP bytes from `eth_getProof`, excluding
+the leaf, zero-padded to the node capacity. Aztec public functions use
+[packed nodes and integer quantities](docs/proofs.md#public-functions).
 
 An account's ETH balance and nonce, under a state root the caller trusts:
 
@@ -197,6 +231,10 @@ Profiles and circuit preparation also need Python 3.11+. The
 [SDK README](packages/ethereum-storage-proofs/README.md) covers the requirements, inputs,
 API, CLI and proving.
 
+For Aztec public functions, `preparePublicAccount` and `preparePublicStorage`
+turn that same `eth_getProof` envelope into packed contract arguments. See the
+[SDK public proof example](packages/ethereum-storage-proofs/README.md#aztec-public-functions).
+
 ## Benchmarks
 
 Circuit size (`bb gates` `circuit_size`) of selected `#[export]` benchmark
@@ -238,6 +276,28 @@ done
 mv noir/export export
 ./scripts/build-brillig-report.sh
 ```
+
+### Public functions
+
+L2 gas of the [`public_proofs`](examples/public_proofs) example's public functions on
+a saved mainnet proof of a USDT balance slot (7 account nodes, 7 storage nodes),
+simulated with Aztec 6.0.0's public transaction simulator on 2026-11-21. The
+counts are the public L2 gas; each transaction also pays a fixed 540,000. A
+transaction's public functions may use at most 6,000,000.
+
+| Function | Proves | Public L2 gas |
+| --- | --- | ---: |
+| `prove_slot` | Account and slot, 10 + 8 node capacity | 4,125,176 |
+| `check_account` | Account only (the slot is proven in private), 10-node capacity | 2,171,219 |
+
+Keccak-f[1600] costs 58,176 L2 gas per 136-byte block and is most of the total:
+an 8-node path of full branch nodes needs about 33 blocks. Of `prove_slot`'s total,
+its 57 permutations are 3,316,032; decoding the arguments, reading the root and
+counting the acceptance about 206,000; the rest, about 600,000, is splitting
+fields into lanes, parsing nodes and encoding leaves. Each node of capacity
+costs about 7,300 L2 gas to decode whether used or not (about 16,000 as a plain
+`[Field; 23]` argument; the example decodes nodes with its own type). See
+[public functions](docs/proofs.md#public-functions).
 
 ## Security
 

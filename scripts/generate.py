@@ -36,6 +36,14 @@ GENERATORS = [
             "noir/ethereum_proofs/src/slot_key_vectors.nr",
         ],
     ),
+    (
+        ["node", "scripts/generate_public_fixtures.mjs"],
+        [
+            "noir/ethereum_public_proofs/src/fixtures_tests.nr",
+            "examples/public_proofs/tests/src/fixture.nr",
+            "packages/ethereum-storage-proofs/tests/fixtures/public.json",
+        ],
+    ),
     (["python3", "scripts/generate_ssz.py"], ["noir/ethereum_storage_proofs/src/ssz_tests.nr"]),
     (
         ["node", "scripts/generate_completeness.mjs"],

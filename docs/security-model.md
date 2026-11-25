@@ -2,7 +2,14 @@
 
 ## Trust boundary
 
-A trie proof authenticates a value **relative to a root**. An Aztec application must bind the root to its authenticated L1 header/root mechanism and enforce its chain, block and finality policy; a private witness containing a root is not sufficient. The libraries contain no bridge, oracle, header verifier, contract or Aztec-node dependency. All verification must run in constrained code. The inclusion APIs reject zero slots and absent accounts; the separate `absence` APIs prove those. This implementation has not had an independent security audit. Application duties are listed under [consumer obligations](proofs.md#consumer-obligations).
+A trie proof authenticates a value **relative to a root**. The application must
+authenticate that root and enforce its chain, block and finality policy. In a
+Noir circuit or Aztec private function, use the constrained verifier so the proof
+enforces the check. In an Aztec public function, the AVM executes and enforces the
+checks in `ethereum_public_proofs`. The inclusion APIs require a present account
+and a nonzero storage value for slot proofs. The constrained `absence` APIs
+cover zero slots and absent accounts. This implementation has not had an
+independent security audit. See the [consumer obligations](proofs.md#consumer-obligations).
 
 ## Accepted input domains and optimization obligations
 
@@ -14,6 +21,8 @@ is not claimed for arbitrary upstream witness bytes.
 | Entry point or specialization | Preconditions and intentional limits |
 | --- | --- |
 | General MPT inclusion | A canonical Ethereum secure trie; a 32-byte key hash; a present account or **nonzero** storage value; canonical minimal integers with zero buffer suffixes. Embedded and hashed children are accepted. Absence proofs are outside this API. |
+| Public MPT inclusion | An authenticated root of a canonical Ethereum secure trie. Packed internal nodes are authenticated before the selected child is read. Sibling subtrees stay opaque. A terminal leaf may be hashed or embedded. Embedded internal branches and extensions are unsupported. |
+| Public MPT path and leaf checks | Obtain `PathEnd` by calling `verify_path` with the authenticated root in the same execution. Complete the check with `verify_account_leaf` or `verify_storage_leaf` on the same key. |
 | Fixed or mixed capacity profiles | Every supplied node fits its selected byte capacity and the path fits the node capacity. Unused node slots are padding. Choose another profile for larger proofs; a small profile does not cover the entire general domain. A third party can push a slot past a fixed capacity: one 1-wei transfer to a ground address (about 16^(m+1) Keccak for m shared nibbles) lengthens a contract's account path for every slot, and a few sibling writes fill a branch past 135/271/407 bytes. Liveness needs a deep fallback key; see [mainnet sizing](internals.md#choosing-capacities). |
 | Hash-only MPT | Every nonempty child reference in each visited node, including siblings, must be a hash. This is an explicit restriction; a hashed selected child alone is insufficient. Use general mode when any sibling is embedded. A canonical trie embeds every node whose RLP is under 32 bytes. A storage leaf at nibble depth 9 or deeper with a value of at most 0x7f is such a node. So any slot whose keccak(slot) shares 8 or more leading nibbles with yours, and that holds a small value, makes every hash-only proof of your slot fail. Large contracts contain such pairs naturally, and a third party can create one for about 2^32 Keccak evaluations (about 2^16 for any pair) and one storage write, for example an ERC-20 `approve` of 1 unit. No false value becomes provable; general mode still accepts the slot. Use general mode, or also authorise a general-mode key, for any slot whose trie neighbourhood you do not control. |
 | Leaf encoders (`encoding`) | `encode_slot` and `compute_account_hash` assert a leaf nibble index of at most 64 and canonical integers with zero suffixes; `encode_slot` zeroes its output after the length. They compute encodings only and prove no inclusion. |

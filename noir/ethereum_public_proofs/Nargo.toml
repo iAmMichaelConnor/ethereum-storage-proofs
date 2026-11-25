@@ -1,0 +1,9 @@
+[package]
+name = "ethereum_public_proofs"
+type = "lib"
+authors = ["Michael Connor"]
+compiler_version = ">=1.0.0"
+
+[dependencies]
+ethereum_proofs = { path = "../ethereum_proofs" }
+ethereum_types = { path = "../ethereum_types" }

@@ -582,3 +582,31 @@ export function fetchProof(options: FetchProofOptions): Promise<
     block: { number: Hex; hash: Hex };
   }
 >;
+
+/** Inputs of the ethereum_public_proofs Noir package. Fields are decimal strings. */
+export const PUBLIC_NODE_FIELDS: 23;
+export const PUBLIC_ACCOUNT_FIELDS: 8;
+export function packPublicNode(bytes: Uint8Array | number[]): string[];
+export function packPublicAccount(account: Account): string[];
+export interface PublicAccountWitness {
+  stateRoot: Root;
+  account: string[];
+  accountNodes: string[][];
+  accountCount: number;
+}
+export interface PublicStorageWitness {
+  storageRoot: Root;
+  slotKey: number[];
+  valueHigh: string;
+  valueLow: string;
+  storageNodes: string[][];
+  storageCount: number;
+}
+export function preparePublicAccount(
+  input: ProofEnvelope,
+  opts?: { accountDepth?: number },
+): Promise<PublicAccountWitness>;
+export function preparePublicStorage(
+  input: ProofEnvelope,
+  opts?: { storageDepth?: number; slotIndex?: number },
+): Promise<PublicStorageWitness>;

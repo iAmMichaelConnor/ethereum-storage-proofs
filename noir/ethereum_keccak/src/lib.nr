@@ -5,6 +5,10 @@
 //! disabled at run time. An active call with `message_size > N` fails.
 //! `keccak256` and `keccak256_limbs` are `keccak256` and `keccak256_lanes` of
 //! noir-lang/keccak256, vendored in `vendor/keccak256` (see NOTICE).
+//!
+//! For circuits: Noir programs and Aztec private functions. In an Aztec public
+//! function, call `std::hash::keccakf1600` on lanes directly, as
+//! `ethereum_public_proofs` does.
 use std::hash::keccakf1600;
 
 global BLOCK_SIZE_IN_BYTES: u32 = 136; //(1600 - BITS * 2) / WORD_SIZE;

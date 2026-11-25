@@ -41,3 +41,11 @@ export {
   prepareL1Zero,
 } from "./absence.mjs";
 export { fetchProof } from "./rpc.mjs";
+export {
+  PUBLIC_NODE_FIELDS,
+  PUBLIC_ACCOUNT_FIELDS,
+  packPublicNode,
+  packPublicAccount,
+  preparePublicAccount,
+  preparePublicStorage,
+} from "./public.mjs";

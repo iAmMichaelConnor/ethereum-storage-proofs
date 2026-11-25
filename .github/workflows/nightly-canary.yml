@@ -33,7 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [ethereum_types, ethereum_keccak, ethereum_proofs, ethereum_recursive_proofs, ethereum_storage_proofs]
+        package: [ethereum_types, ethereum_keccak, ethereum_proofs, ethereum_recursive_proofs, ethereum_public_proofs, ethereum_storage_proofs]
     steps:
       - name: Checkout sources
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
